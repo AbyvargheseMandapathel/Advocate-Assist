@@ -43,11 +43,43 @@ def dashboard_view(request):
         return redirect('login')
     
     # accounts/views.py
+# accounts/views.py
+
 def admin_dashboard(request):
     if request.user.user_type == 'admin':
-        return render(request, 'admin/dashboard.html', {'user': request.user})
+        if request.method == 'POST':
+            user_id = request.POST.get('user_id')
+            action = request.POST.get('action')  # 'approve' or 'reject'
+            user = CustomUser.objects.get(id=user_id)
+            
+            if action == 'approve':
+                user.is_approved = True
+                user.save()
+            elif action == 'reject':
+                rejection_reason = request.POST.get('rejection_reason')
+                user.rejection_reason = rejection_reason
+                user.save()
+                return redirect(reverse('admin_dashboard'))  # Redirect to admin dashboard after rejection
+                
+        lawyer_requests = CustomUser.objects.filter(user_type='lawyer', is_approved=False)
+        return render(request, 'admin/dashboard.html', {'user': request.user, 'lawyer_requests': lawyer_requests})
     else:
         return HttpResponseForbidden("Access Denied")
+
+
+# accounts/views.py
+
+def lawyer_dashboard(request):
+    if request.user.user_type == 'lawyer':
+        if request.user.is_approved:
+            return render(request, 'lawyer/dashboard.html', {'user': request.user})
+        elif request.user.rejection_reason:
+            return render(request, 'lawyer/rejection_reason.html', {'rejection_reason': request.user.rejection_reason})
+        else:
+            return render(request, 'lawyer/pending_approval.html')
+    else:
+        return HttpResponseForbidden("Access Denied")
+
 
 def student_dashboard(request):
     if request.user.user_type == 'student':
@@ -58,9 +90,22 @@ def student_dashboard(request):
 def client_dashboard(request):
     return render(request, 'client/dashboard.html', {'user': request.user})
 
-def lawyer_dashboard(request):
+# def lawyer_dashboard(request):
+#     if request.user.user_type == 'lawyer':
+#         return render(request, 'lawyer/dashboard.html', {'user': request.user})
+#     else:
+#         return HttpResponseForbidden("Access Denied")
+
+def pending_approval_view(request):
     if request.user.user_type == 'lawyer':
-        return render(request, 'lawyer/dashboard.html', {'user': request.user})
+        return render(request, 'lawyer/pending_approval.html')
+    else:
+        return HttpResponseForbidden("Access Denied")
+    
+def rejection_reason_view(request, user_id):
+    user = CustomUser.objects.get(id=user_id)
+    if request.user.user_type == 'lawyer' and user.rejection_reason:
+        return render(request, 'lawyer/rejection_reason.html', {'rejection_reason': user.rejection_reason})
     else:
         return HttpResponseForbidden("Access Denied")
 

@@ -6,8 +6,38 @@
     <title>Dashboard</title>
 </head>
 <body>
-    <h1>Welcome to your Dashboard, Njn aane!</h1>
-    <p>User Type: {{ user.user_type }}</p>
-    <a href="{% url 'logout' %}">Logout</a>
+    <!-- Display list of lawyer requests -->
+<h1>Welcome to the Admin Dashboard</h1>
+<h2>Lawyer Requests</h2>
+<ul>
+    {% for lawyer_request in lawyer_requests %}
+        <li>
+            {{ lawyer_request.username }} - {{ lawyer_request.user_type }}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ lawyer_request.id }}">
+                <button type="submit" name="action" value="approve">Approve</button>
+                <button type="button" name="action" value="reject" class="reject-button">Reject</button>
+                <div class="rejection-reason-field" style="display: none;">
+                    <textarea name="rejection_reason" placeholder="Rejection Reason"></textarea>
+                </div>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+<script>
+    // JavaScript to toggle visibility of rejection reason field
+    const rejectButtons = document.querySelectorAll('.reject-button');
+    rejectButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const rejectionReasonField = button.parentElement.querySelector('.rejection-reason-field');
+            if (rejectionReasonField) {
+                rejectionReasonField.style.display = 'block';
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
