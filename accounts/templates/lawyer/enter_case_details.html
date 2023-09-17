@@ -23,7 +23,14 @@
 
     <div class="container py-5">
         <h1 class="text-center">Enter Case Details for {{ client.client_name }}</h1>
-
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
         <div class="row">
             <div class="col-12 add-user-col d-flex justify-content-center">
                 <form class="add-user-form" method="post" enctype="multipart/form-data">

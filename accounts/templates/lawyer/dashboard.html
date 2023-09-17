@@ -66,11 +66,11 @@
                             <div class="main-menu  d-none d-lg-block">
                                 <nav>
                                     <ul id="navigation">
-                                        <li><a class="active" href="{% url 'home' %}">home</a></li>
-                                        <li><a href="{% url 'about' %}">About</a></li>
+                                        <li><a class="active" href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>
+                                        <!-- <li><a href="{% url 'about' %}">About</a></li>
                                         <li><a href="{% url 'contact' %}">Contact</a></li>
-                                        <li><a href="{% url 'home' %}">Practice Area</a></li> 
-                                        <li><a href="{% url 'lawyer_list' %}">Lawyers<i class="ti-angle-down"></i></a>
+                                        <li><a href="{% url 'home' %}">Practice Area</a></li>  -->
+                                        <!-- <li><a href="{% url 'lawyer_list' %}">Lawyers<i class="ti-angle-down"></i></a>
                                             <ul class="submenu">
                                                 
                                                 
@@ -79,16 +79,16 @@
                                                 {% endif %}
                                             </ul>
                                             
-                                        </li>
+                                        </li> -->
                                         {% if user.is_authenticated %}
                                         <li>
                                             <a href="#">Welcome {{ user.first_name }}<i class="ti-angle-down"></i></a>
                                             <ul class="submenu">
                                                 {% if user.user_type == 'admin' %}
-                                                <li><a href="{% url 'admin_dashboard' %}">Dashboard</a></li>
+                                                
                                                 {% endif %}
                                                 {% if user.user_type == 'lawyer' %}
-                                                         <li><a href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>                                       
+                                                         <!-- <li><a href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>                                        -->
                                                                   {% endif %}
                                                 <li><a href="{% url 'logout' %}">Logout</a></li>
                                             </ul>
@@ -121,12 +121,12 @@
                 <h6 style="padding: 0; margin: 0;">No of Bookings</h6>
             </div>
             
-            <div class="col-4 mt-3 dashboard-top-buttons">
+            <!-- <div class="col-4 mt-3 dashboard-top-buttons">
                 <i class="fa-solid fa-user"></i>
                 <button>
                     <h6 style="padding: 0; margin: 0;">Assign Works</h6>
                 </button>
-            </div>
+            </div> -->
             <div class="col-4 mt-3 dashboard-top-buttons">
                 <i class="fa-solid fa-advocate"></i>
                 <a href="{% url 'update_lawyer_profile' user_id=user.pk %}">

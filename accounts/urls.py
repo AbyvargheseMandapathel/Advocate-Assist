@@ -27,6 +27,7 @@ urlpatterns = [
     path('student/save/', views.student_save, name='student_save'),
     path('lawyer/save/', views.lawyer_save, name='lawyer_save'),
     path('update_profile/', views.update_profile, name='update_profile'),
+    path('case_saved/', views.case_saved, name='case_saved'),
     path('update_lawyer_profile/<int:user_id>/', views.update_lawyer_profile, name='update_lawyer_profile'),
     
 ]

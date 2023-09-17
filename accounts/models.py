@@ -160,6 +160,8 @@ class LawyerProfile(models.Model):
     
     
     
+    
+    
     # def calculate_experience(self):
     #     today = timezone.now().date()
     #     experience = (today - self.start_date).days // 365
@@ -338,6 +340,14 @@ class CurrentCase(models.Model):
     email = models.EmailField()
     phnno = models.CharField(max_length=15)
     incident_description = models.TextField()
+    # # Incident details
+    incident_place = models.CharField(max_length=100)
+    incident_date = models.DateField()
+    incident_time = models.TimeField()
+    witness_name = models.CharField(max_length=100, blank=True)
+    witness_details = models.TextField(blank=True)
+    
+    
 
     def __str__(self):
         return f"Case {self.case_number} - {self.client_name}"

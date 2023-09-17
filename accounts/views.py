@@ -1,5 +1,6 @@
 # accounts/views.py
 from django.utils.http import urlsafe_base64_decode
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect ,get_object_or_404 ,HttpResponseRedirect
 from django.urls import reverse
@@ -25,6 +26,7 @@ from django.contrib.auth.forms import AuthenticationForm  # Import Authenticatio
 from django.contrib import messages
 import re  
 import csv
+from django.db import models  # Import the models module from Django's database module
 import os
 from django.utils import timezone
 import pytz  # Import pytz module
@@ -33,6 +35,10 @@ from .forms import UserProfileUpdateForm  # Create a form for profile updates
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from datetime import date, timedelta
+from pytz import timezone as pytz_timezone
+from .utils import validate_date, validate_time
+
 
 
 
@@ -413,8 +419,8 @@ def home(request):
     for lawyer in lawyers:
         lawyer_info.append({
             'name': f"{lawyer.user.first_name} {lawyer.user.last_name}",
-            # 'specialization': lawyer.specialization,
-            # 'profile_picture': lawyer.profile_picture.url,
+            'specialization': lawyer.specialization,
+            'profile_picture': lawyer.profile_picture.url,
             'id': lawyer.id,  # Add lawyer's ID
         })
 
@@ -850,6 +856,44 @@ def student_save(request):
 #         return render(request, 'lawyer/user_details_form.html')
 
 
+from datetime import datetime
+
+def calculate_experience(experience_str):
+    parts = experience_str.split()
+    
+    years = 0
+    months = 0
+    days = 0
+
+    for i, part in enumerate(parts):
+        if part == 'years' or part == 'year':
+            years = int(parts[i - 1])
+        elif part == 'months' or part == 'month':
+            months = int(parts[i - 1])
+        elif part == 'days' or part == 'day':
+            days = int(parts[i - 1])
+
+    total_days = years * 365 + months * 30 + days
+    return total_days
+
+def calculate_experience(experience_str):
+    parts = experience_str.split()
+    
+    years = 0
+    months = 0
+    days = 0
+
+    for i, part in enumerate(parts):
+        if part == 'years' or part == 'year':
+            years = int(parts[i - 1])
+        elif part == 'months' or part == 'month':
+            months = int(parts[i - 1])
+        elif part == 'days' or part == 'day':
+            days = int(parts[i - 1])
+
+    total_days = years * 365 + months * 30 + days
+    return total_days
+
 def lawyer_save(request):
     if request.user.user_type != 'lawyer':
         return render(request, '404.html')
@@ -857,27 +901,24 @@ def lawyer_save(request):
     available_time_slots = TimeSlot.objects.all()
 
     if request.method == 'POST':
-        specialization = request.POST['specialization']
-        dob = request.POST['dob']
+        specialization = request.POST.get('specialization')
+        dob = request.POST.get('dob')
         dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
         today = datetime.now().date()
         age = today.year - dob_date.year - ((today.month, today.day) < (dob_date.month, dob_date.day))
 
         if age < 25:
-            
             LawyerProfile.objects.filter(user=request.user).delete()
             return render(request, 'sorry.html')
          
-      
-        address = request.POST['address']
-        total_cases_handeled = request.POST['total_cases_handeled']
-        currendly_handling = request.POST['currendly_handling']
-        experience = request.POST['experience']
-        court = request.POST['court']
-     
+        address = request.POST.get('address')
+        total_cases_handeled = request.POST.get('total_cases_handeled')
+        currendly_handling = request.POST.get('currendly_handling')
+        experience_str = request.POST.get('experience')
+        court = request.POST.get('court')
 
-        # if not all([specialization,  address, dob,total_cases_handeled,currendly_handling,experience,court]):
-        #     return HttpResponse("Please fill in all fields.")
+        # Calculate the total number of days of experience
+        total_experience_days = calculate_experience(experience_str)
 
         # Create or update the user's details
         user = request.user
@@ -887,22 +928,23 @@ def lawyer_save(request):
         user.save()
         print("User saved")
 
-     
         lawyer_profile, created = LawyerProfile.objects.get_or_create(user=user)
         lawyer_profile.specialization = specialization
-       
-        lawyer_profile.total_cases_handeled=total_cases_handeled
-        lawyer_profile.currendly_handling=currendly_handling
-        lawyer_profile.experience=experience
+        lawyer_profile.total_cases_handeled = total_cases_handeled
+        lawyer_profile.currendly_handling = currendly_handling
+        lawyer_profile.experience = total_experience_days
         lawyer_profile.court = court
 
         lawyer_profile.save()
-        print("lawyer saved")
+        print("Lawyer saved")
 
-        return render(request,'lawyer/dashboard.html')
+        return render(request, 'lawyer/dashboard.html')
      
     else:
         return render(request, 'lawyer/user_details_form.html', {'available_time_slots': available_time_slots})
+    
+
+
     
 
 # def lawyer_save(request):
@@ -1261,6 +1303,10 @@ def enter_case_details(request, client_id, lawyer_id):
     client = get_object_or_404(CustomUser, id=client_id, user_type='client')
     lawyer = get_object_or_404(LawyerProfile, id=lawyer_id)
 
+    # Check if the case has already been submitted
+    if request.session.get('case_submitted'):
+        return render(request, 'case_already_submitted.html')
+
     if request.method == 'POST':
         incident_place = request.POST.get('incident_place')
         incident_date = request.POST.get('incident_date')
@@ -1271,7 +1317,25 @@ def enter_case_details(request, client_id, lawyer_id):
         client_adhar = request.POST.get('client_adhar')
         client_adhar_photo = request.FILES.get('client_adhar_photo')
 
-        if all([incident_place, incident_date, incident_time, witness_name, incident_description]):
+        # Validate incident date and time in IST (Indian Standard Time)
+        current_datetime = timezone.now()
+        ist = pytz.timezone('Asia/Kolkata')  # Get the IST time zone
+        current_datetime_ist = current_datetime.astimezone(ist)
+        incident_datetime = timezone.datetime.combine(
+            timezone.datetime.strptime(incident_date, '%Y-%m-%d').date(),
+            timezone.datetime.strptime(incident_time, '%H:%M').time(),
+            ist
+        )
+
+        if incident_datetime > current_datetime_ist:
+            messages.error(request, 'Incident date and time cannot be in the future.')
+        elif not all([incident_place, witness_name]):
+            messages.error(request, 'Incident place and witness name are required fields.')
+        elif not witness_name.replace(" ", "").isalpha():
+            messages.error(request, 'Witness name should contain only letters without any numbers or special characters.')
+        elif not client_adhar.isdigit() or len(client_adhar) != 12:
+            messages.error(request, 'Client Aadhar should contain 12 numeric digits.')
+        else:
             # Generate a unique case number
             case_number = generate_unique_case_number()
 
@@ -1289,21 +1353,46 @@ def enter_case_details(request, client_id, lawyer_id):
                 witness_details=witness_details,
                 incident_description=incident_description,
                 client_adhar=client_adhar,
-                client_adhar_photo = client_adhar_photo,
+                client_adhar_photo=client_adhar_photo,
                 lawyer=lawyer,  # Assign the lawyer to the case
             )
 
             # Handle saving the Aadhar card photo file
             if client_adhar_photo:
                 file_name = f'aadhar_photos/{case.id}_{client_adhar_photo.name}'
-                file_content = ContentFile(client_adhar_photo.read())
-                default_storage.save(file_name, file_content)
+                default_storage.save(file_name, ContentFile(client_adhar_photo.read()))
+
+            # Set the session variable to indicate case submission
+            request.session['case_submitted'] = True
 
             messages.success(request, 'Case saved successfully.')
-            # return redirect('case_detail', case_id=case.id)
-            return render(request, 'case_saved.html')
+            return redirect('case_saved')
 
     return render(request, 'lawyer/enter_case_details.html', {'client': client})
+
+def case_saved(request):
+    return render(request, 'case_saved.html')
+
+
+def case_detail(request, case_id):
+    # Retrieve the case object by its ID or return a 404 error if not found
+    case = get_object_or_404(Case, pk=case_id)
+
+    # Render the 'case_detail.html' template with the case object
+    return render(request, 'lawyer/case_detail.html', {'case': case})
+
+# def case_saved(request):
+#     return render(request, 'case_saved.html')
+
+
+
+# def case_saved(request):
+#     # Check if the session variable indicating case submission exists
+#     if request.session.get('case_submitted'):
+#         # Case has already been submitted, show a message or redirect to a different page
+#         return render(request, 'case_already_submitted.html')
+    
+#     return render(request, 'case_saved.html')
 
 def generate_unique_case_number():
     # Generate a unique case number like 1001, 1002, ...
@@ -1315,15 +1404,18 @@ def generate_unique_case_number():
         return '1001'
     
     
-def case_detail(request, case_id):
-    # Retrieve the case object by its ID or return a 404 error if not found
-    case = get_object_or_404(Case, pk=case_id)
-
-    # Render the 'case_detail.html' template with the case object
-    return render(request, 'lawyer/case_detail.html', {'case': case})
-
+def is_valid_date(date_str):
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
 
 def current_cases(request):
+    # Ensure that only lawyers can access this view
+    if request.user.user_type != 'lawyer':
+        return render(request, 'sorry.html')
+
     lawyer = request.user.lawyer_profile
     current_case_count = lawyer.current_cases.count()
     max_current_cases = lawyer.currendly_handling
@@ -1332,21 +1424,41 @@ def current_cases(request):
         case_number = request.POST.get('case_number')
         client_name = request.POST.get('client_name')
         incident_description = request.POST.get('incident_description')
+        incident_place = request.POST.get('incident_place')
+        incident_date = request.POST.get('incident_date')
+        incident_time = request.POST.get('incident_time')
+        witness_name = request.POST.get('witness_name')
+        witness_details = request.POST.get('witness_details')
 
-        if current_case_count < max_current_cases:
-            if all([case_number, client_name, incident_description]):
+        # Validate incident date and time
+        if not validate_date(incident_date):
+            messages.error(request, 'Incident date cannot be in the future.')
+        elif not validate_time(incident_time):
+            messages.error(request, 'Incident time cannot be in the future.')
+        elif not client_name.replace(" ", "").isalpha():
+            messages.error(request, 'Client name should contain only letters.')
+        elif not witness_name.replace(" ", "").isalpha():
+            messages.error(request, 'Witness name should contain only letters.')
+        elif current_case_count >= max_current_cases:
+            messages.warning(request, 'You have reached the maximum number of current cases.')
+        else:
+            try:
+                CurrentCase.objects.get(case_number=case_number)  # Check if case number is unique
+                messages.error(request, 'A case with this number already exists.')
+            except ObjectDoesNotExist:
                 CurrentCase.objects.create(
                     lawyer=lawyer,
                     case_number=case_number,
                     client_name=client_name,
                     incident_description=incident_description,
+                    incident_place=incident_place,
+                    incident_date=incident_date,
+                    incident_time=incident_time,
+                    witness_name=witness_name,
+                    witness_details=witness_details,
                 )
                 messages.success(request, 'Current case added successfully.')
                 return redirect('current_cases')
-            else:
-                messages.error(request, 'All fields are required.')
-        else:
-            messages.warning(request, 'You have reached the maximum number of current cases.')
 
     current_cases = lawyer.current_cases.all()
 
@@ -1358,7 +1470,6 @@ def current_cases(request):
     }
     
     return render(request, 'lawyer/current_cases.html', context)
-
 
 def list_cases(request):
     user_type = request.user.user_type  # Assuming you have 'user_type' set in your CustomUser model
@@ -1373,3 +1484,18 @@ def list_cases(request):
         cases = None
 
     return render(request, 'case_list.html', {'cases': cases})
+
+
+def search_lawyers(request):
+    # Get the search query from the form
+    query = request.GET.get('query')
+
+    # Filter lawyers based on the search query (you can modify the filter condition)
+    lawyers = LawyerProfile.objects.filter(
+        models.Q(user__first_name__icontains=query) |  # Search by first name
+        models.Q(user__last_name__icontains=query) |   # Search by last name
+        models.Q(specialization__icontains=query)      # Search by specialization
+    )
+
+    # Pass the search results to the template
+    return render(request, 'search.html', {'lawyers': lawyers, 'query': query})
