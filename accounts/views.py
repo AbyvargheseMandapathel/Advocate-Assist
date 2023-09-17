@@ -237,28 +237,64 @@ def admin_dashboard(request):
 # def client_dashboard(request):
 #     return render(request, 'client/dashboard.html', {'user': request.user})
 @login_required
+# def client_dashboard(request):
+#     user = request.user
+
+#     # Get all bookings by the client
+#     all_bookings = Booking.objects.filter(user=user)
+
+#     # Filter bookings by status
+#     confirmed_bookings = all_bookings.filter(status='confirmed')
+#     pending_bookings = all_bookings.filter(status='pending')
+#     canceled_bookings = all_bookings.filter(status='canceled')
+#     rescheduled_bookings = all_bookings.filter(status='reschedule')
+#     notpaid_bookings = all_bookings.filter(status='notpaid')
+
+#     context = {
+#         'confirmed_bookings': confirmed_bookings,
+#         'pending_bookings': pending_bookings,
+#         'canceled_bookings': canceled_bookings,
+#         'rescheduled_bookings':rescheduled_bookings,
+#         'notpaid_bookings':notpaid_bookings,
+#     }
+
+#     return render(request, 'client/dashboard.html', context)
+
 def client_dashboard(request):
     user = request.user
 
     # Get all bookings by the client
-    all_bookings = Booking.objects.filter(user=user)
+    all_bookings = Appointment.objects.filter(client=user)
 
-    # Filter bookings by status
-    confirmed_bookings = all_bookings.filter(status='confirmed')
-    pending_bookings = all_bookings.filter(status='pending')
-    canceled_bookings = all_bookings.filter(status='canceled')
-    rescheduled_bookings = all_bookings.filter(status='reschedule')
-    notpaid_bookings = all_bookings.filter(status='notpaid')
 
     context = {
-        'confirmed_bookings': confirmed_bookings,
-        'pending_bookings': pending_bookings,
-        'canceled_bookings': canceled_bookings,
-        'rescheduled_bookings':rescheduled_bookings,
-        'notpaid_bookings':notpaid_bookings,
+        'all_bookings': all_bookings,
     }
 
     return render(request, 'client/dashboard.html', context)
+
+# def client_dashboard(request):
+#     user = request.user
+
+#     # Get all bookings by the client
+#     all_bookings = Booking.objects.filter(user=user)
+
+#     # Filter bookings by status
+#     confirmed_bookings = all_bookings.filter(status='confirmed')
+#     pending_bookings = all_bookings.filter(status='pending')
+#     canceled_bookings = all_bookings.filter(status='canceled')
+#     rescheduled_bookings = all_bookings.filter(status='reschedule')
+#     notpaid_bookings = all_bookings.filter(status='notpaid')
+
+#     context = {
+#         'confirmed_bookings': confirmed_bookings,
+#         'pending_bookings': pending_bookings,
+#         'canceled_bookings': canceled_bookings,
+#         'rescheduled_bookings':rescheduled_bookings,
+#         'notpaid_bookings':notpaid_bookings,
+#     }
+
+#     return render(request, 'client/dashboard.html', context)
 
 @login_required
 def lawyer_dashboard(request):
@@ -492,6 +528,9 @@ def error(request):
 
 def sorry(request):
     return render(request, '404.html')
+
+def profile(request):
+    return redirect('client_dashboard')
 
 def update(request):
     return render(request, 'updated.html')
