@@ -493,6 +493,9 @@ def error(request):
 def sorry(request):
     return render(request, '404.html')
 
+def update(request):
+    return render(request, 'updated.html')
+
 @login_required
 def mail(request):
     return render(request, 'mail.html')
@@ -1544,7 +1547,7 @@ def assign_working_hours(request):
                 print("Selected slot IDs:", [slot.id for slot in selected_time_slots])  # Debugging: Check selected slot IDs
 
                 # Redirect to the dashboard or another page
-                return redirect('dashboard')
+                return redirect('update')
         except Exception as e:
             # Log the error
             traceback.print_exc()
