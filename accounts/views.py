@@ -38,6 +38,9 @@ from django.core.files.base import ContentFile
 from datetime import date, timedelta
 from pytz import timezone as pytz_timezone
 from .utils import validate_date, validate_time
+from django.http import HttpResponseServerError
+import traceback
+
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -1498,24 +1501,60 @@ def search_lawyers(request):
     return render(request, 'search.html', {'lawyers': lawyers, 'query': query})
 
 
-def assign_working_hours(request):
-    lawyer = request.user.lawyer_profile
+# def assign_working_hours(request):
+#     lawyer = request.user.lawyer_profile
 
-    if request.method == 'POST':
-        selected_time_slots = request.POST.getlist('selected_time_slots')
+#     if request.method == 'POST':
+#         selected_time_slots = request.POST.getlist('selected_time_slots')
         
-        # Clear existing working slots for the lawyer
-        lawyer.working_slots.clear()
+#         # Clear existing working slots for the lawyer
+#         lawyer.working_slots.clear()
 
-        # Add selected time slots to the lawyer's working hours
-        for time_slot_id in selected_time_slots:
-            time_slot = TimeSlot.objects.get(pk=time_slot_id)
-            lawyer.working_slots.add(time_slot)
+#         # Add selected time slots to the lawyer's working hours
+#         for time_slot_id in selected_time_slots:
+#             time_slot = TimeSlot.objects.get(pk=time_slot_id)
+#             lawyer.working_slots.add(time_slot)
 
-        return redirect('home')  # Redirect to a success page
+#         return redirect('home')  # Redirect to a success page
 
+#     all_time_slots = TimeSlot.objects.all()
+#     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots})
+
+
+def assign_working_hours(request):
+    if request.method == 'POST':
+        print("Received a POST request")  # Debugging: Check if the request is received
+
+        selected_time_slot_ids = request.POST.getlist('selected_time_slots')
+        selected_time_slots = TimeSlot.objects.filter(id__in=selected_time_slot_ids)
+
+        try:
+            if request.user.is_authenticated and hasattr(request.user, 'lawyer_profile'):
+                lawyer = request.user.lawyer_profile
+
+                print(f"User {request.user.username} is authenticated and has a lawyer profile")  # Debugging: Check user profile
+
+                # Clear existing working slots for the lawyer
+                lawyer.working_slots.clear()
+
+                # Add the selected time slots to the lawyer's working slots
+                lawyer.working_slots.set(selected_time_slots)
+
+                print("Working slots assigned successfully")  # Debugging: Check if slots are assigned successfully
+                print("Selected slot IDs:", [slot.id for slot in selected_time_slots])  # Debugging: Check selected slot IDs
+
+                # Redirect to the dashboard or another page
+                return redirect('dashboard')
+        except Exception as e:
+            # Log the error
+            traceback.print_exc()
+            return HttpResponseServerError("An error occurred while saving data.")
+
+    # Retrieve all available time slots to display in the form
     all_time_slots = TimeSlot.objects.all()
+
     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots})
+    
 
 # def book_lawyer(request, lawyer_id):
 #     lawyer = LawyerProfile.objects.get(pk=lawyer_id)
