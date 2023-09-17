@@ -36,6 +36,13 @@
 </head>
 
 <body>
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Select Date</li>
+        </ol>
+    </nav>
     <div class="container py-5">
         <h1 class="text-center">Assign Your Working Hours</h1>
         <form method="post" action="{% url 'assign_working_hours' %}">

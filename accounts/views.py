@@ -1555,8 +1555,13 @@ def assign_working_hours(request):
 
     # Retrieve all available time slots to display in the form
     all_time_slots = TimeSlot.objects.all()
+    breadcrumbs = [
+        ("Home", reverse("home")),
+        ("lawyer_dashboard", reverse("lawyer_dashboard")),
+        ("assign_working_hours", None),  # Current page (no link)
+    ]
 
-    return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots})
+    return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots ,'breadcrumbs': breadcrumbs})
     
 
 # def book_lawyer(request, lawyer_id):
@@ -1613,6 +1618,14 @@ def book_lawyer(request, lawyer_id, selected_date):
     try:
         # Convert selected_date to a Python date object
         selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        
+        # Get the current date
+        current_date = timezone.now().date()
+
+        # Check if the selected_date is in the past
+        if selected_date < current_date:
+            messages.error(request, 'Booking is not possible for past dates.')
+            
 
         # Get the lawyer object
         lawyer = LawyerProfile.objects.get(id=lawyer_id)
