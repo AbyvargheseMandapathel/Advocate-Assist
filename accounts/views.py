@@ -17,7 +17,7 @@ from django.utils.http import urlsafe_base64_decode
 from .forms import CustomPasswordResetForm  
 from django.core.exceptions import ValidationError
 from datetime import datetime
-from .models import LawyerProfile , ContactEntry , Internship , Student , Application , Booking , Day ,TimeSlot , LawyerDayOff , HolidayRequest , Case
+from .models import LawyerProfile , ContactEntry , Internship , Student , Application , Booking , Day ,TimeSlot , LawyerDayOff , HolidayRequest , Case ,Appointment
 from .forms import ContactForm , BookingForm , InternshipForm , BookingStatusForm ,CustomUserUpdateForm, LawyerProfileUpdateForm
 import markdown
 from django.contrib import messages
@@ -38,9 +38,6 @@ from django.core.files.base import ContentFile
 from datetime import date, timedelta
 from pytz import timezone as pytz_timezone
 from .utils import validate_date, validate_time
-
-
-
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -504,64 +501,64 @@ def book(request):
     return render(request, 'book.html')
 
 @login_required
-def book_lawyer(request, lawyer_id):
-    lawyer = get_object_or_404(LawyerProfile, pk=lawyer_id)
-    user = request.user
+# def book_lawyer(request, lawyer_id):
+#     lawyer = get_object_or_404(LawyerProfile, pk=lawyer_id)
+#     user = request.user
 
-    if request.method == 'POST':
-        form = BookingForm(request.POST, lawyer=lawyer)
+#     if request.method == 'POST':
+#         form = BookingForm(request.POST, lawyer=lawyer)
 
-        if form.is_valid():
-            booking_date = form.cleaned_data['booking_date']
+#         if form.is_valid():
+#             booking_date = form.cleaned_data['booking_date']
             
-            # Check if the booking date is in the future
-            if booking_date <= timezone.localdate():
-                messages.error(request, 'You can only book for future dates.')
-            else:
-                selected_day = booking_date.weekday() + 1
+#             # Check if the booking date is in the future
+#             if booking_date <= timezone.localdate():
+#                 messages.error(request, 'You can only book for future dates.')
+#             else:
+#                 selected_day = booking_date.weekday() + 1
 
-                if not lawyer.working_days.filter(name=selected_day).exists():
-                    messages.error(request, 'This lawyer does not work on the selected day.')
-                else:
-                    # Check if the selected date is marked as a day off for the lawyer
-                    if LawyerDayOff.objects.filter(lawyer=lawyer, date=booking_date).exists():
-                        messages.error(request, 'This date is marked as a day off for the lawyer.')
-                    else:
-                        # Continue with booking logic
-                        booking = form.save(commit=False)
-                        booking.user = user
-                        booking.lawyer = lawyer
-                        booking.status = 'pending'
+#                 if not lawyer.working_days.filter(name=selected_day).exists():
+#                     messages.error(request, 'This lawyer does not work on the selected day.')
+#                 else:
+#                     # Check if the selected date is marked as a day off for the lawyer
+#                     if LawyerDayOff.objects.filter(lawyer=lawyer, date=booking_date).exists():
+#                         messages.error(request, 'This date is marked as a day off for the lawyer.')
+#                     else:
+#                         # Continue with booking logic
+#                         booking = form.save(commit=False)
+#                         booking.user = user
+#                         booking.lawyer = lawyer
+#                         booking.status = 'pending'
                         
-                        # Assign the selected TimeSlot instance to the booking
-                        selected_time_slot = form.cleaned_data['time_slot']
-                        booking.time_slot = selected_time_slot
+#                         # Assign the selected TimeSlot instance to the booking
+#                         selected_time_slot = form.cleaned_data['time_slot']
+#                         booking.time_slot = selected_time_slot
                         
-                        # Check for existing bookings and user's existing bookings (as previously implemented)
-                        existing_booking = Booking.objects.filter(
-                            lawyer=lawyer,
-                            booking_date=booking.booking_date,
-                            time_slot=selected_time_slot,
-                        ).exclude(status='canceled').first()
+#                         # Check for existing bookings and user's existing bookings (as previously implemented)
+#                         existing_booking = Booking.objects.filter(
+#                             lawyer=lawyer,
+#                             booking_date=booking.booking_date,
+#                             time_slot=selected_time_slot,
+#                         ).exclude(status='canceled').first()
 
-                        user_existing_booking = Booking.objects.filter(
-                            user=user,
-                            booking_date=booking.booking_date,
-                            time_slot=selected_time_slot,
-                        ).exclude(status='canceled').first()
+#                         user_existing_booking = Booking.objects.filter(
+#                             user=user,
+#                             booking_date=booking.booking_date,
+#                             time_slot=selected_time_slot,
+#                         ).exclude(status='canceled').first()
 
-                        if existing_booking:
-                            messages.error(request, 'This time slot is already booked by another user.')
-                        elif user_existing_booking:
-                            messages.error(request, 'You have already booked a lawyer at this time slot.')
-                        else:
-                            booking.save()
-                            # Redirect to a success page or display a success message
-                            return redirect('home')
-    else:
-        form = BookingForm(lawyer=lawyer)
+#                         if existing_booking:
+#                             messages.error(request, 'This time slot is already booked by another user.')
+#                         elif user_existing_booking:
+#                             messages.error(request, 'You have already booked a lawyer at this time slot.')
+#                         else:
+#                             booking.save()
+#                             # Redirect to a success page or display a success message
+#                             return redirect('home')
+#     else:
+#         form = BookingForm(lawyer=lawyer)
 
-    return render(request, 'book_lawyer.html', {'form': form, 'lawyer': lawyer})
+#     return render(request, 'book_lawyer.html', {'form': form, 'lawyer': lawyer})
 
 # def reschedule_appointment(request, booking_id):
 #     # Get the booking object for the provided booking_id
@@ -1499,3 +1496,109 @@ def search_lawyers(request):
 
     # Pass the search results to the template
     return render(request, 'search.html', {'lawyers': lawyers, 'query': query})
+
+
+def assign_working_hours(request):
+    lawyer = request.user.lawyer_profile
+
+    if request.method == 'POST':
+        selected_time_slots = request.POST.getlist('selected_time_slots')
+        
+        # Clear existing working slots for the lawyer
+        lawyer.working_slots.clear()
+
+        # Add selected time slots to the lawyer's working hours
+        for time_slot_id in selected_time_slots:
+            time_slot = TimeSlot.objects.get(pk=time_slot_id)
+            lawyer.working_slots.add(time_slot)
+
+        return redirect('home')  # Redirect to a success page
+
+    all_time_slots = TimeSlot.objects.all()
+    return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots})
+
+# def book_lawyer(request, lawyer_id):
+#     lawyer = LawyerProfile.objects.get(pk=lawyer_id)
+#     user = request.user
+
+#     if request.method == 'POST':
+#         appointment_date = request.POST.get('appointment_date')
+#         time_slot_id = request.POST.get('time_slot')
+#         time_slot = TimeSlot.objects.get(pk=time_slot_id)
+
+#         # Check if the selected time slot is available for booking
+#         if not Appointment.objects.filter(
+#             Q(time_slot=time_slot, appointment_date=appointment_date, lawyer=lawyer) |
+#             Q(time_slot=time_slot, appointment_date=appointment_date, client=user)
+#         ).exists():
+#             appointment = Appointment(
+#                 lawyer=lawyer,
+#                 client=user,
+#                 time_slot=time_slot,
+#                 appointment_date=appointment_date
+#             )
+#             appointment.save()
+#             return redirect('home')  # Redirect to a success page or appointment list
+
+#     # Get available time slots based on lawyer's working hours for the current date
+#     today = datetime.today().date()
+#     available_time_slots = TimeSlot.objects.filter(
+#         Q(lawyers=lawyer) & Q(day=today.strftime("%A"))
+#     )
+
+#     return render(request, 'book_appointment.html', {'lawyer': lawyer, 'available_time_slots': available_time_slots})
+
+
+def select_date(request, lawyer_id):
+    # Retrieve the lawyer using the lawyer_id parameter
+    lawyer = get_object_or_404(LawyerProfile, id=lawyer_id)
+    
+    if request.method == 'POST':
+        selected_date = request.POST.get('selected_date')
+        return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
+    
+    return render(request, 'select_date.html', {'lawyer': lawyer})
+
+@login_required
+def book_lawyer(request, lawyer_id, selected_date):
+    # Ensure that the logged-in user is a lawyer
+    if request.user.user_type == 'lawyer':
+        # Redirect to an error page or display an error message
+        return redirect('error_page')  # Replace 'error_page' with the appropriate URL name
+
+    # Convert the selected date to a datetime.date object
+    selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+
+    # Retrieve the lawyer associated with the provided lawyer_id
+    lawyer = get_object_or_404(LawyerProfile, id=lawyer_id)
+
+    # Retrieve the lawyer's working time slots for the selected date
+    working_time_slots = lawyer.get_working_time_slots(selected_date)
+
+    # Initialize a list to store available appointment slots
+    appointment_slots = []
+
+    # Iterate through the working time slots and generate appointment slots
+    for time_slot in working_time_slots:
+        start_time = datetime.combine(selected_date, time_slot.start_time)
+        end_time = datetime.combine(selected_date, time_slot.end_time)
+
+        while start_time < end_time:
+            appointment_slots.append(start_time.strftime('%H:%M %p'))  # Format the slot as desired
+            start_time += timedelta(minutes=15)  # Adjust the slot duration as needed
+
+    if request.method == 'POST':
+        # Handle the form submission when the client books an appointment
+        selected_slot = request.POST.get('selected_slot')
+
+        # Check if the selected slot is still available (you may need to add additional checks)
+        if selected_slot and selected_slot in appointment_slots:
+            # Create an Appointment record
+            appointment = Appointment(lawyer=lawyer, client=request.user, slot=selected_slot)
+            appointment.save()
+
+            # You can add more logic here (e.g., sending confirmation emails)
+
+            return redirect('home')  # Redirect to a success page
+
+    return render(request, 'book_lawyer.html', {'selected_date': selected_date, 'appointment_slots': appointment_slots, 'lawyer': lawyer})

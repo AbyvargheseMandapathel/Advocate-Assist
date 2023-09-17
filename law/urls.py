@@ -33,6 +33,9 @@ urlpatterns = [
     path('current_cases/', views.current_cases, name='current_cases'),
     path('list_cases/', views.list_cases, name='list_cases'),
     path('search-lawyers/', views.search_lawyers, name='search-lawyers'),
+    path('assign-working-hours/', views.assign_working_hours, name='assign_working_hours'),
+    path('select-date/<int:lawyer_id>/', views.select_date, name='select_date'),
+    path('book_lawyer/<int:lawyer_id>/<str:selected_date>/', views.book_lawyer, name='book_lawyer'),
     # path('update_booking_status/', views.update_booking_status, name='update_booking_status'),
 
 

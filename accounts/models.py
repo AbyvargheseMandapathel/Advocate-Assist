@@ -4,6 +4,7 @@ from django.utils import timezone
 import datetime
 from datetime import datetime, timedelta ,time
 from taggit.managers import TaggableManager
+from django.contrib.auth import get_user_model  # Import the get_user_model function
 
 
 
@@ -76,24 +77,109 @@ class CustomUser(AbstractUser):
 #         # return f"{self.start_time.strftime('%I:%M %p')} - {self.end_time.strftime('%I:%M %p')}"
 #         return f"{self.start_time.strftime('%I:%M %p')} "
 
+# class TimeSlot(models.Model):
+#     # name = models.CharField(max_length=30)
+#     start_time = models.TimeField()
+
+#     def __str__(self):
+#         # Calculate the end time by adding one hour to the start_time
+#         start_datetime = datetime.combine(datetime.today(), self.start_time)
+#         end_datetime = start_datetime + timedelta(hours=1)
+
+#         # Format the start and end times as "HH:MM AM/PM"
+#         formatted_start_time = start_datetime.strftime("%I:%M %p")
+#         formatted_end_time = end_datetime.strftime("%I:%M %p")
+
+#         # Combine start and end times to create the name
+#         name = f"{formatted_start_time} - {formatted_end_time}"
+
+#         return name
+
+
+# class TimeSlot(models.Model):
+#     DAY_CHOICES = (
+#         ('Monday', 'Monday'),
+#         ('Tuesday', 'Tuesday'),
+#         ('Wednesday', 'Wednesday'),
+#         ('Thursday', 'Thursday'),
+#         ('Friday', 'Friday'),
+#         ('Saturday', 'Saturday'),
+#         ('Sunday', 'Sunday'),
+#     )
+
+#     SLOT_CHOICES = (
+#         ('8-10', '8:00 AM - 10:00 AM'),
+#         ('10-12', '10:00 AM - 12:00 PM'),
+#         ('1-3', '1:00 PM - 3:00 PM'),
+#         ('3-5', '3:00 PM - 5:00 PM'),
+#         ('8-8:15', '8:00 AM - 8:15 AM'),
+#         ('8:15-8:30', '8:15 AM - 8:30 AM'),
+#         ('8:30-8:45', '8:30 AM - 8:45 AM'),
+#         # Add more 15-minute slots here
+#     )
+
+#     day = models.CharField(max_length=10, choices=DAY_CHOICES)
+#     slot = models.CharField(max_length=10, choices=SLOT_CHOICES)
+
+#     def _str_(self):
+#         return f"{self.day} - {self.get_slot_display()}"
+
+#     class Meta:
+#         unique_together = ('day', 'slot')
+    
 class TimeSlot(models.Model):
-    # name = models.CharField(max_length=30)
-    start_time = models.TimeField()
+    DAY_CHOICES = (
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+        ('Sunday', 'Sunday'),
+    )
+
+    MAIN_SLOT_CHOICES = (
+        ('8-10', '8:00 AM - 10:00 AM'),
+        ('10-12', '10:00 AM - 12:00 PM'),
+        ('1-3', '1:00 PM - 3:00 PM'),
+        ('3-5', '3:00 PM - 5:00 PM'),
+    )
+
+    day = models.CharField(max_length=10, choices=DAY_CHOICES)
+    main_slot = models.CharField(max_length=10, choices=MAIN_SLOT_CHOICES)
+    lawyers = models.ManyToManyField('LawyerProfile', blank=True, related_name='working_slots')
 
     def __str__(self):
-        # Calculate the end time by adding one hour to the start_time
-        start_datetime = datetime.combine(datetime.today(), self.start_time)
-        end_datetime = start_datetime + timedelta(hours=1)
+        return f"{self.get_day_display()} - {self.get_main_slot_display()}"
 
-        # Format the start and end times as "HH:MM AM/PM"
-        formatted_start_time = start_datetime.strftime("%I:%M %p")
-        formatted_end_time = end_datetime.strftime("%I:%M %p")
+    class Meta:
+        unique_together = ('day', 'main_slot')
 
-        # Combine start and end times to create the name
-        name = f"{formatted_start_time} - {formatted_end_time}"
+# class TimeSlot(models.Model):
+#     DAY_CHOICES = (
+#         ('Monday', 'Monday'),
+#         ('Tuesday', 'Tuesday'),
+#         ('Wednesday', 'Wednesday'),
+#         ('Thursday', 'Thursday'),
+#         ('Friday', 'Friday'),
+#         ('Saturday', 'Saturday'),
+#         ('Sunday', 'Sunday'),
+#     )
 
-        return name
-    
+#     MAIN_SLOT_CHOICES = (
+#         ('8-10', '8:00 AM - 10:00 AM'),
+#         ('10-12', '10:00 AM - 12:00 PM'),
+#         ('1-3', '1:00 PM - 3:00 PM'),
+#         ('3-5', '3:00 PM - 5:00 PM'),
+#     )
+
+#     day = models.CharField(max_length=15, choices=DAY_CHOICES)
+#     main_slot = models.CharField(max_length=10, choices=MAIN_SLOT_CHOICES)
+#     lawyer = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='working_hours')
+
+#     def __str__(self):
+#         return f"{self.day} - {self.main_slot}"
+
 
     
 class LawyerProfile(models.Model):
@@ -147,6 +233,7 @@ class LawyerProfile(models.Model):
     currendly_handling = models.IntegerField(null=True, blank=True)
     experience = models.IntegerField(null=True, blank=True)
     court = models.CharField(max_length=200, choices=COURT,blank=True)
+    working_hours = models.ManyToManyField(TimeSlot, blank=True)
 
     # working_time_start = models.TimeField(null=True, blank=True)
     # working_time_end = models.TimeField(null=True, blank=True)
@@ -351,3 +438,23 @@ class CurrentCase(models.Model):
 
     def __str__(self):
         return f"Case {self.case_number} - {self.client_name}"
+    
+    
+# class Appointment(models.Model):
+#     lawyer = models.ForeignKey(LawyerProfile, on_delete=models.CASCADE)
+#     client = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+#     time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
+#     appointment_date = models.DateField()
+#     status = models.CharField(max_length=20)
+
+#     def __str__(self):
+#         return f"Appointment with {self.lawyer.user.first_name} on {self.appointment_date}"
+
+class Appointment(models.Model):
+    lawyer = models.ForeignKey(LawyerProfile, on_delete=models.CASCADE)
+    client = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
+    appointment_date = models.DateField()
+
+    def __str__(self):
+        return f"Appointment with {self.lawyer.user.username} on {self.appointment_date}"
