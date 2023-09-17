@@ -275,7 +275,7 @@ def lawyer_dashboard(request):
     
         # Get the current lawyer's profile
         lawyer_profile = LawyerProfile.objects.get(user=request.user)
-        bookings = Booking.objects.filter(lawyer=lawyer_profile).order_by('-pk')
+        bookings = Appointment.objects.filter(lawyer=lawyer_profile).order_by('-pk')
 
         # Count the number of bookings for this lawyer
         booking_count = Booking.objects.filter(lawyer=lawyer_profile).count()
@@ -1193,7 +1193,7 @@ def update_lawyer_profile(request, user_id):
 
 def all_bookings(request):
     # Fetch all bookings from the database
-    bookings = Booking.objects.all()
+    bookings = Appointment.objects.all()
 
     # Pass the bookings to the template
     context = {
