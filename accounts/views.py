@@ -1194,13 +1194,23 @@ def update_lawyer_profile(request, user_id):
     return render(request, 'lawyer/update_lawyer_profile.html', context)
 
 
-def all_bookings(request):
-    # Fetch all bookings from the database
-    bookings = Appointment.objects.all()
+def all_bookings(request, lawyer_id=None, client_id=None):
+    # Define a base queryset with all bookings
+    queryset = Appointment.objects.all()
 
-    # Pass the bookings to the template
+    # Filter bookings by lawyer if lawyer_id is provided
+    if lawyer_id is not None:
+        lawyer = get_object_or_404(LawyerProfile, id=lawyer_id)
+        queryset = queryset.filter(lawyer=lawyer)
+
+    # Filter bookings by client if client_id is provided
+    if client_id is not None:
+        client = get_object_or_404(CustomUser, id=client_id)
+        queryset = queryset.filter(client=client)
+
+    # Pass the filtered bookings to the template
     context = {
-        'bookings': bookings,
+        'bookings': queryset,
     }
 
     # Render the template
@@ -1262,6 +1272,8 @@ def admin_approve_reject_holiday(request, request_id):
 
             # Create a LawyerDayOff instance for the approved holiday
             LawyerDayOff.objects.create(lawyer=lawyer_profile, date=holiday_request.date)
+            print("Request ID:", request_id)
+
 
             messages.success(request, 'Holiday request approved successfully.')
 
@@ -1602,7 +1614,12 @@ def select_date(request, lawyer_id):
     
     if request.method == 'POST':
         selected_date = request.POST.get('selected_date')
-        return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
+        
+        # Check if it's a holiday for the lawyer
+        if LawyerDayOff.objects.filter(lawyer=lawyer, date=selected_date).exists():
+            messages.error(request, 'Booking is not possible on a day marked as a holiday for the lawyer.')
+        else:
+            return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
     
     return render(request, 'select_date.html', {'lawyer': lawyer})
 
@@ -1629,6 +1646,9 @@ def book_lawyer(request, lawyer_id, selected_date):
 
         # Get the lawyer object
         lawyer = LawyerProfile.objects.get(id=lawyer_id)
+        
+        
+        
 
         # Retrieve the lawyer's working time slots for the selected date
         working_time_slots = TimeSlot.objects.filter(lawyers=lawyer, day=selected_date.strftime('%A')).order_by('start_time')
@@ -1642,7 +1662,7 @@ def book_lawyer(request, lawyer_id, selected_date):
             end_time = datetime.combine(selected_date, time_slot.end_time)
 
             current_time = start_time
-            while current_time < end_time:
+            while current_time <= end_time:
                 appointment_slots.append(current_time.strftime('%I:%M %p'))
                 current_time += timedelta(minutes=15)
 
