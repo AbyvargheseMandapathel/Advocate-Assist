@@ -55,7 +55,7 @@ class CustomUser(AbstractUser):
     ('Puducherry', 'Puducherry'),
 )
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='client')
-
+    
     email = models.EmailField(unique=True, default='')  # Change: Use email as the username
     first_name = models.CharField(max_length=30, default='')  # Added: First name field
     last_name = models.CharField(max_length=30, default='')  # Added: Last name field
@@ -127,6 +127,37 @@ class CustomUser(AbstractUser):
 #     class Meta:
 #         unique_together = ('day', 'slot')
     
+# class TimeSlot(models.Model):
+#     DAY_CHOICES = (
+#         ('Monday', 'Monday'),
+#         ('Tuesday', 'Tuesday'),
+#         ('Wednesday', 'Wednesday'),
+#         ('Thursday', 'Thursday'),
+#         ('Friday', 'Friday'),
+#         ('Saturday', 'Saturday'),
+#         ('Sunday', 'Sunday'),
+#     )
+
+#     MAIN_SLOT_CHOICES = (
+#         ('8-10', '8:00 AM - 10:00 AM'),
+#         ('10-12', '10:00 AM - 12:00 PM'),
+#         ('1-3', '1:00 PM - 3:00 PM'),
+#         ('3-5', '3:00 PM - 5:00 PM'),
+#     )
+
+#     day = models.CharField(max_length=10, choices=DAY_CHOICES)
+#     main_slot = models.CharField(max_length=10, choices=MAIN_SLOT_CHOICES)
+#     lawyers = models.ManyToManyField('LawyerProfile', blank=True, related_name='working_slots')
+
+#     def __str__(self):
+#         return f"{self.get_day_display()} - {self.get_main_slot_display()}"
+
+#     class Meta:
+#         unique_together = ('day', 'main_slot')
+
+from django.db import models
+from django.contrib.auth import get_user_model
+
 class TimeSlot(models.Model):
     DAY_CHOICES = (
         ('Monday', 'Monday'),
@@ -138,22 +169,17 @@ class TimeSlot(models.Model):
         ('Sunday', 'Sunday'),
     )
 
-    MAIN_SLOT_CHOICES = (
-        ('8-10', '8:00 AM - 10:00 AM'),
-        ('10-12', '10:00 AM - 12:00 PM'),
-        ('1-3', '1:00 PM - 3:00 PM'),
-        ('3-5', '3:00 PM - 5:00 PM'),
-    )
-
     day = models.CharField(max_length=10, choices=DAY_CHOICES)
-    main_slot = models.CharField(max_length=10, choices=MAIN_SLOT_CHOICES)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
     lawyers = models.ManyToManyField('LawyerProfile', blank=True, related_name='working_slots')
 
     def __str__(self):
-        return f"{self.get_day_display()} - {self.get_main_slot_display()}"
+        return f"{self.get_day_display()} - {self.start_time.strftime('%I:%M %p')} to {self.end_time.strftime('%I:%M %p')}"
 
     class Meta:
-        unique_together = ('day', 'main_slot')
+        unique_together = ('day', 'start_time', 'end_time')
+
 
 # class TimeSlot(models.Model):
 #     DAY_CHOICES = (
@@ -234,6 +260,43 @@ class LawyerProfile(models.Model):
     experience = models.IntegerField(null=True, blank=True)
     court = models.CharField(max_length=200, choices=COURT,blank=True)
     working_hours = models.ManyToManyField(TimeSlot, blank=True)
+    
+    def get_available_time_slots(self, day_of_week):
+        # Retrieve the time slots associated with this lawyer for the given day_of_week
+        time_slots = self.working_slots.filter(day=day_of_week).order_by('main_slot')
+
+        # Initialize a list to store available time slots
+        available_time_slots = []
+
+        # Iterate through the time slots and generate available slots
+        for time_slot in time_slots:
+            main_slot_parts = time_slot.main_slot.split(' - ')
+
+            # Ensure that there are two parts (start time and end time)
+            if len(main_slot_parts) == 2:
+                start_time_str, end_time_str = main_slot_parts
+
+                # Remove leading/trailing spaces
+                start_time_str = start_time_str.strip()
+                end_time_str = end_time_str.strip()
+
+                # Parse the start and end times
+                start_time = datetime.strptime(start_time_str, '%I:%M %p')
+                end_time = datetime.strptime(end_time_str, '%I:%M %p')
+
+                while start_time < end_time:
+                    available_time_slots.append(start_time.strftime('%I:%M %p'))
+                    start_time += timedelta(minutes=15)  # Adjust the slot duration as needed
+
+        return available_time_slots
+
+    # def is_available(self, date, time_slot):
+    #     # Check if the selected slot is available for booking on a specific date
+    #     return not Appointment.objects.filter(
+    #         lawyer=self,
+    #         appointment_date=date,
+    #         time_slot=time_slot,
+    #     ).exists()
 
     # working_time_start = models.TimeField(null=True, blank=True)
     # working_time_end = models.TimeField(null=True, blank=True)
@@ -264,17 +327,25 @@ class LawyerProfile(models.Model):
 
     #     return experience
     
-    def is_available(self,date , time_slot):
-        bookings_for_date = Booking.objects.filter(
-            lawyer= self,
-            booking_date = date,
-            time_slot = time_slot,
-            status = 'confirmed'
+    def is_available(self, selected_date, selected_slot):
+        try:
+            selected_time = datetime.strptime(selected_slot, '%I:%M %p').time()
+        except ValueError:
+            return False
+
+        conflicting_appointments = self.appointments.filter(
+            appointment_date=selected_date,
+            time_slot=selected_time
         )
-        return not bookings_for_date.exists()
-    
+
+        return not conflicting_appointments.exists()
+
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}"
+        return f"{self.user.first_name} {self.user.last_name} - {self.specialization}"
+    
+    @property
+    def appointments(self):
+        return Appointment.objects.filter(lawyer=self)
 
     def save(self, *args, **kwargs):
         # self.experience = self.calculate_experience()
@@ -451,10 +522,12 @@ class CurrentCase(models.Model):
 #         return f"Appointment with {self.lawyer.user.first_name} on {self.appointment_date}"
 
 class Appointment(models.Model):
-    lawyer = models.ForeignKey(LawyerProfile, on_delete=models.CASCADE)
-    client = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
+    lawyer = models.ForeignKey('LawyerProfile', on_delete=models.CASCADE)
+    client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     appointment_date = models.DateField()
+    time_slot = models.CharField(max_length=20)# Use TimeSlot model here
+
+    # Add any other fields or methods related to appointments
 
     def __str__(self):
-        return f"Appointment with {self.lawyer.user.username} on {self.appointment_date}"
+        return f'Appointment with {self.lawyer} on {self.appointment_date} at {self.time_slot}'

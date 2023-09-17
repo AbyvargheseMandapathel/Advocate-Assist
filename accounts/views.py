@@ -1559,46 +1559,70 @@ def select_date(request, lawyer_id):
     
     return render(request, 'select_date.html', {'lawyer': lawyer})
 
-@login_required
+def parse_time(time_str):
+    try:
+        # Parse the time string in the format "08:00 AM"
+        parsed_time = datetime.strptime(time_str, '%I:%M %p').strftime('%H:%M:%S')
+        return parsed_time
+    except ValueError:
+        return None
+
 def book_lawyer(request, lawyer_id, selected_date):
-    # Ensure that the logged-in user is a lawyer
-    if request.user.user_type == 'lawyer':
-        # Redirect to an error page or display an error message
-        return redirect('error_page')  # Replace 'error_page' with the appropriate URL name
+    try:
+        # Convert selected_date to a Python date object
+        selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
 
-    # Convert the selected date to a datetime.date object
-    selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        # Get the lawyer object
+        lawyer = LawyerProfile.objects.get(id=lawyer_id)
 
-    # Retrieve the lawyer associated with the provided lawyer_id
-    lawyer = get_object_or_404(LawyerProfile, id=lawyer_id)
+        # Retrieve the lawyer's working time slots for the selected date
+        working_time_slots = TimeSlot.objects.filter(lawyers=lawyer, day=selected_date.strftime('%A')).order_by('start_time')
 
-    # Retrieve the lawyer's working time slots for the selected date
-    working_time_slots = lawyer.get_working_time_slots(selected_date)
+        # Initialize a list to store available appointment slots
+        appointment_slots = []
 
-    # Initialize a list to store available appointment slots
-    appointment_slots = []
+        # Iterate through the working time slots and generate appointment slots
+        for time_slot in working_time_slots:
+            start_time = datetime.combine(selected_date, time_slot.start_time)
+            end_time = datetime.combine(selected_date, time_slot.end_time)
 
-    # Iterate through the working time slots and generate appointment slots
-    for time_slot in working_time_slots:
-        start_time = datetime.combine(selected_date, time_slot.start_time)
-        end_time = datetime.combine(selected_date, time_slot.end_time)
+            current_time = start_time
+            while current_time < end_time:
+                appointment_slots.append(current_time.strftime('%I:%M %p'))
+                current_time += timedelta(minutes=15)
 
-        while start_time < end_time:
-            appointment_slots.append(start_time.strftime('%H:%M %p'))  # Format the slot as desired
-            start_time += timedelta(minutes=15)  # Adjust the slot duration as needed
+        if request.method == 'POST':
+            # Handle the form submission when the client books an appointment
+            selected_slot = request.POST.get('selected_slot')
 
-    if request.method == 'POST':
-        # Handle the form submission when the client books an appointment
-        selected_slot = request.POST.get('selected_slot')
+            # Check if the selected slot is still available
+            if selected_slot and selected_slot in appointment_slots:
+                # Check if the selected slot is available for booking
+                if lawyer.is_available(selected_date, selected_slot):
+                    try:
+                        # Check if the selected slot is in the correct time format
+                        selected_time = datetime.strptime(selected_slot, '%I:%M %p').time()
+                    except ValueError:
+                        messages.error(request, 'Invalid time format. Please choose a valid time from the list (e.g., 08:45 AM).')
+                        return render(request, 'book_lawyer.html', {'selected_date': selected_date, 'appointment_slots': appointment_slots})
 
-        # Check if the selected slot is still available (you may need to add additional checks)
-        if selected_slot and selected_slot in appointment_slots:
-            # Create an Appointment record
-            appointment = Appointment(lawyer=lawyer, client=request.user, slot=selected_slot)
-            appointment.save()
+                    # Create an Appointment record
+                    appointment = Appointment(
+                        lawyer=lawyer,
+                        client=request.user,
+                        appointment_date=selected_date,
+                        time_slot=selected_time  # Use the selected_time instead of selected_slot
+                    )
+                    appointment.save()
 
-            # You can add more logic here (e.g., sending confirmation emails)
+                    messages.success(request, 'Appointment booked successfully!')
+                    return redirect('home')  # Redirect to a success page
+                else:
+                    messages.error(request, 'Selected slot is not available. Please choose another slot.')
+            else:
+                messages.error(request, 'Invalid selected slot format. Please choose a valid slot from the list.')
 
-            return redirect('home')  # Redirect to a success page
-
-    return render(request, 'book_lawyer.html', {'selected_date': selected_date, 'appointment_slots': appointment_slots, 'lawyer': lawyer})
+        return render(request, 'book_lawyer.html', {'selected_date': selected_date, 'appointment_slots': appointment_slots})
+    except LawyerProfile.DoesNotExist:
+        messages.error(request, 'Lawyer not found.')
+        return redirect('home')
