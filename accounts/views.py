@@ -1606,6 +1606,8 @@ def assign_working_hours(request):
 
     # Retrieve all available time slots to display in the form
     all_time_slots = TimeSlot.objects.all()
+    
+    
     breadcrumbs = [
         ("Home", reverse("home")),
         ("lawyer_dashboard", reverse("lawyer_dashboard")),

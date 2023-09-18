@@ -47,38 +47,15 @@
         <h1 class="text-center">Assign Your Working Hours</h1>
         <form method="post" action="{% url 'assign_working_hours' %}">
             {% csrf_token %}
-            <!-- Loop through days of the week -->
-<h2>Monday</h2>
-<div class="row mt-3">
-    <!-- Loop through time slots and display only those for Monday -->
-    {% for time_slot in all_time_slots %}
-    {% if time_slot.day == "Monday" %}
-    <div class="col-md-6">
-        <label>
-            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}">
-            {{ time_slot }}
-        </label>
-    </div>
-    {% endif %}
-    {% endfor %}
-</div>
-
-<h2>Tuesday</h2>
-<div class="row mt-3">
-    <!-- Loop through time slots and display only those for Tuesday -->
-    {% for time_slot in all_time_slots %}
-    {% if time_slot.day == "Tuesday" %}
-    <div class="col-md-6">
-        <label>
-            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}">
-            {{ time_slot }}
-        </label>
-    </div>
-    {% endif %}
-    {% endfor %}
-</div>
-
-
+            <div class="row mt-5">
+                {% for time_slot in all_time_slots %}
+                <div class="col-md-6">
+                    <label>
+                        <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}">
+                        {{ time_slot }}
+                    </label>
+                </div>
+                {% endfor %}
             <div class="text-center my-4">
                 <button type="submit" class="btn btn-warning">Assign Working Hours</button>
             </div>
