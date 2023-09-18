@@ -48,14 +48,29 @@
         <form method="post" action="{% url 'assign_working_hours' %}">
             {% csrf_token %}
             <!-- Loop through days of the week -->
-<h2>Monday</h2>
+            <h2>Monday</h2>
+            <div class="row mt-3">
+                <!-- Loop through time slots and display only those for Monday -->
+                {% for time_slot in all_time_slots %}
+                {% if time_slot.day == "Monday" %}
+                <div class="col-md-6">
+                    <label>
+                        <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
+                        {{ time_slot }}
+                    </label>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+<!-- Loop through days of the week -->
+<h2>Tuesday</h2>
 <div class="row mt-3">
     <!-- Loop through time slots and display only those for Monday -->
     {% for time_slot in all_time_slots %}
-    {% if time_slot.day == "Monday" %}
+    {% if time_slot.day == "Tuesday" %}
     <div class="col-md-6">
         <label>
-            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}">
+            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
             {{ time_slot }}
         </label>
     </div>
@@ -63,20 +78,93 @@
     {% endfor %}
 </div>
 
-<h2>Tuesday</h2>
+<!-- Repeat similar code for other days of the week -->
+
+<!-- Loop through days of the week -->
+<h2>Wednesday</h2>
 <div class="row mt-3">
-    <!-- Loop through time slots and display only those for Tuesday -->
+    <!-- Loop through time slots and display only those for Monday -->
     {% for time_slot in all_time_slots %}
-    {% if time_slot.day == "Tuesday" %}
+    {% if time_slot.day == "Wednesday" %}
     <div class="col-md-6">
         <label>
-            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}">
+            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
             {{ time_slot }}
         </label>
     </div>
     {% endif %}
     {% endfor %}
 </div>
+
+<!-- Repeat similar code for other days of the week -->
+<!-- Loop through days of the week -->
+<h2>Thursday</h2>
+<div class="row mt-3">
+    <!-- Loop through time slots and display only those for Monday -->
+    {% for time_slot in all_time_slots %}
+    {% if time_slot.day == "Thursday" %}
+    <div class="col-md-6">
+        <label>
+            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
+            {{ time_slot }}
+        </label>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Repeat similar code for other days of the week -->
+
+<!-- Loop through days of the week -->
+<h2>Friday</h2>
+<div class="row mt-3">
+    <!-- Loop through time slots and display only those for Monday -->
+    {% for time_slot in all_time_slots %}
+    {% if time_slot.day == "Friday" %}
+    <div class="col-md-6">
+        <label>
+            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
+            {{ time_slot }}
+        </label>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Repeat similar code for other days of the week -->
+<!-- Loop through days of the week -->
+<h2>Saturday</h2>
+<div class="row mt-3">
+    <!-- Loop through time slots and display only those for Monday -->
+    {% for time_slot in all_time_slots %}
+    {% if time_slot.day == "Saturday" %}
+    <div class="col-md-6">
+        <label>
+            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
+            {{ time_slot }}
+        </label>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Loop through days of the week -->
+<h2>Sunday</h2>
+<div class="row mt-3">
+    <!-- Loop through time slots and display only those for Monday -->
+    {% for time_slot in all_time_slots %}
+    {% if time_slot.day == "Sunday" %}
+    <div class="col-md-6">
+        <label>
+            <input type="checkbox" name="selected_time_slots" value="{{ time_slot.id }}" {% if time_slot.id in selected_time_slot_ids %}checked{% endif %}>
+            {{ time_slot }}
+        </label>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Repeat similar code for other days of the week -->
 
 
             <div class="text-center my-4">

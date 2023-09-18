@@ -7,7 +7,7 @@ class RedirectAuthenticatedUserMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated and request.path == redirect('login'):
-            # If the user is logged in and tries to access the login page, redirect them to the home page.
+            # If the user is logged in and tries to access the login page, redirect them to the login page.
             return redirect('login')
 
         response = self.get_response(request)

@@ -236,7 +236,7 @@ def admin_dashboard(request):
 
 # def client_dashboard(request):
 #     return render(request, 'client/dashboard.html', {'user': request.user})
-@login_required
+
 # def client_dashboard(request):
 #     user = request.user
 
@@ -259,7 +259,7 @@ def admin_dashboard(request):
 #     }
 
 #     return render(request, 'client/dashboard.html', context)
-
+@login_required
 def client_dashboard(request):
     user = request.user
 
@@ -651,7 +651,7 @@ def book(request):
 
 #     return render(request, 'reschedule_appointment.html', {'form': form, 'booking': booking})
 
-
+@login_required
 def reschedule_appointment(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
     user = request.user
@@ -936,6 +936,7 @@ def calculate_experience(experience_str):
     total_days = years * 365 + months * 30 + days
     return total_days
 
+@login_required
 def lawyer_save(request):
     if request.user.user_type != 'lawyer':
         return render(request, '404.html')
@@ -1101,7 +1102,7 @@ def lawyer_save(request):
 
 #     # return redirect('lawyer_dashboard')  # Redirect back to the lawyer's dashboard
 #     return render(request, 'lawyer/mark_holiday.html')
-
+@login_required
 def mark_holiday(request):
     user = request.user  # Get the current user
 
@@ -1135,7 +1136,7 @@ def mark_holiday(request):
 
     
 
-
+@login_required
 def update_profile(request):
     user = request.user
 
@@ -1175,7 +1176,7 @@ def update_profile(request):
 
 #     return render(request, 'lawyer/update_lawyer_profile.html', context)
 
-
+@login_required
 def update_lawyer_profile(request, user_id):
     
     if request.user.id != user_id:
@@ -1232,7 +1233,7 @@ def update_lawyer_profile(request, user_id):
 
     return render(request, 'lawyer/update_lawyer_profile.html', context)
 
-
+@login_required
 def all_bookings(request, lawyer_id=None, client_id=None):
     # Define a base queryset with all bookings
     queryset = Appointment.objects.all()
@@ -1283,7 +1284,7 @@ def list_lawyers(request):
     # Render the template
     return render(request, 'lawyerfulllist.html', context)
 
-
+@login_required
 def admin_view_holiday_requests(request):
     # Check if the user is an admin
     if not request.user.is_superuser:
@@ -1295,7 +1296,7 @@ def admin_view_holiday_requests(request):
     # Render the template with the pending holiday requests data
     return render(request, 'admin/admin_view_holiday_requests.html', {'pending_requests': pending_requests})
 
-
+@login_required
 def admin_approve_reject_holiday(request, request_id):
     if request.method == 'POST':
         # Retrieve the holiday request object by its ID
@@ -1423,11 +1424,11 @@ def enter_case_details(request, client_id, lawyer_id):
             return redirect('case_saved')
 
     return render(request, 'lawyer/enter_case_details.html', {'client': client})
-
+@login_required
 def case_saved(request):
     return render(request, 'case_saved.html')
 
-
+@login_required
 def case_detail(request, case_id):
     # Retrieve the case object by its ID or return a 404 error if not found
     case = get_object_or_404(Case, pk=case_id)
@@ -1464,7 +1465,7 @@ def is_valid_date(date_str):
         return True
     except ValueError:
         return False
-
+@login_required
 def current_cases(request):
     # Ensure that only lawyers can access this view
     if request.user.user_type != 'lawyer':
@@ -1574,7 +1575,7 @@ def search_lawyers(request):
 #     all_time_slots = TimeSlot.objects.all()
 #     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots})
 
-
+@login_required
 def assign_working_hours(request):
     if request.method == 'POST':
         print("Received a POST request")  # Debugging: Check if the request is received
@@ -1607,14 +1608,20 @@ def assign_working_hours(request):
     # Retrieve all available time slots to display in the form
     all_time_slots = TimeSlot.objects.all()
     
-    
+    # Check if the user is authenticated and has a lawyer profile
+    if request.user.is_authenticated and hasattr(request.user, 'lawyer_profile'):
+        lawyer = request.user.lawyer_profile
+        selected_time_slot_ids = lawyer.working_slots.values_list('id', flat=True)
+    else:
+        selected_time_slot_ids = []
+
     breadcrumbs = [
         ("Home", reverse("home")),
         ("lawyer_dashboard", reverse("lawyer_dashboard")),
         ("assign_working_hours", None),  # Current page (no link)
     ]
 
-    return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots ,'breadcrumbs': breadcrumbs})
+    return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots ,'breadcrumbs': breadcrumbs ,'selected_time_slot_ids': selected_time_slot_ids})
     
 
 # def book_lawyer(request, lawyer_id):
@@ -1648,7 +1655,7 @@ def assign_working_hours(request):
 
 #     return render(request, 'book_appointment.html', {'lawyer': lawyer, 'available_time_slots': available_time_slots})
 
-
+@login_required
 def select_date(request, lawyer_id):
     # Retrieve the lawyer using the lawyer_id parameter
     lawyer = get_object_or_404(LawyerProfile, id=lawyer_id)
@@ -1671,7 +1678,7 @@ def parse_time(time_str):
         return parsed_time
     except ValueError:
         return None
-
+@login_required
 def book_lawyer(request, lawyer_id, selected_date):
     try:
         # Convert selected_date to a Python date object

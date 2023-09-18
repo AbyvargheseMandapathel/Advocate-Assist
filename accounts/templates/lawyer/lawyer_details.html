@@ -162,48 +162,35 @@ address p {
                 <i class="fa-solid fa-envelope mr-2"></i>
                 {{ lawyer.user.email }}
               </p>
-    
-              <p>
-                <i class="fa-solid fa-gavel mr-2"></i>
-                {{ lawyer.license_no }}
-              </p>
-    
-              <p>
-                <i class="fa-regular fa-calendar-days mr-2"></i>
-                {{ lawyer.start_date }}
-              </p>
-    
               <p>
                 <i class="fa-solid fa-phone mr-2"></i>
                 {{ lawyer.user.phone }}
               </p>
               <p>
                 <i class="fa-regular fa-calendar-days mr-2"></i>
-                {{ lawyer.experience }} Years
+                {{ lawyer.user.dob }}
               </p>
+              <p>
+                <i class="fas fa-map-marker-alt mr-2"></i>
+                {{ lawyer.address }}
+              </p>
+              <p>
+                <i class="fa-regular fa-calendar-days mr-2"></i>
+                {{ lawyer.experience }} Days
+              </p>
+              <!-- <p>
+                <i class="fa-solid fa-gavel mr-2"></i>
+                {{ lawyer.license_no }}
+              </p> -->
               <p>
                 <i class="fas fa-briefcase mr-2"></i>
                 {{ lawyer.specialization }}
               </p>
               <p>
-                <i class="fas fa-briefcase mr-2"></i>
-                {{ lawyer.budget }}
+                <i class="fas fa-building mr-2"></i>
+                {{ lawyer.court }}
               </p>
-              <p>
-                <i class="fas fa-briefcase mr-2"></i>
-                {{ lawyer.cases_won }}
-              </p>
-              <p>
-                <i class="fas fa-briefcase mr-2"></i>
-                {{ lawyer.cases_lost }}
-              </p>
-              <p>
-                <i class="fas fa-map-marker-alt mr-2"></i>
-                {% for location in lawyer.locations.all %}
-                    {{ location }}
-                    {% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            </p>
+              
             
     
               <!-- <p>
