@@ -5,14 +5,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>Document</title>
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'css/nice-select.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gijgo.css' %}">
     <link rel="stylesheet" href="{% static 'css/slicknav.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
     <link rel="stylesheet" href="{% static 'css/add_user.css' %}">
-
-    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'css/navigation.css' %}">
+    <link rel="stylesheet" href="{% static 'css/breadcrumbs.css' %}">
 </head>
 <style>
     * {
@@ -54,6 +62,13 @@
         text-align: center;
     }
 
+    .result {
+        padding-top: 3%;
+        align-items: center;
+        text-align: center;
+        color: red;
+    }
+
     @media screen and (max-width: 771px) {
         .img-container {
             width: 15em;
@@ -62,7 +77,72 @@
     }
 </style>
 <body>
-    
+    <header>
+        <div class="header-area ">
+            <div id="sticky-header" class="main-header-area">
+                <div class="container-fluid p-0">
+                    <div class="row align-items-center justify-content-between no-gutters">
+                        <div class="col-xl-2 col-lg-2">
+                            <div class="logo-img">
+                                <a href="index.html">
+                                    <img src="{% static 'img\icon.ico' %}" alt=""width="120">
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-xl-7 col-lg-8">
+                            <div class="main-menu  d-none d-lg-block">
+                                <nav>
+                                    <ul id="navigation">
+                                        <li><a class="active" href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>
+                                        <!-- <li><a href="{% url 'about' %}">About</a></li>
+                                        <li><a href="{% url 'contact' %}">Contact</a></li>
+                                        <li><a href="{% url 'home' %}">Practice Area</a></li>  -->
+                                        <!-- <li><a href="{% url 'lawyer_list' %}">Lawyers<i class="ti-angle-down"></i></a>
+                                            <ul class="submenu">
+                                                
+                                                
+                                                {% if user.user_type == 'admin' %}
+                                                <li><a href="{% url 'add_lawyer' %}">Add Lawyer</a></li>
+                                                {% endif %}
+                                            </ul>
+                                            
+                                        </li> -->
+                                        {% if user.is_authenticated %}
+                                        <li>
+                                            <a href="#">Welcome {{ user.first_name }}<i class="ti-angle-down"></i></a>
+                                            <ul class="submenu">
+                                                {% if user.user_type == 'admin' %}
+                                                
+                                                {% endif %}
+                                                {% if user.user_type == 'lawyer' %}
+                                                         <!-- <li><a href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>                                        -->
+                                                                  {% endif %}
+                                                <li><a href="{% url 'logout' %}">Logout</a></li>
+                                            </ul>
+                                        </li>
+                                        {% else %}
+                                        
+                                        <li><a href="{% url 'signup' %}">Signup</a></li>
+                                        <li><a href="{% url 'login' %}">Login</a></li>
+                                        {% endif %}
+                                    </ul>
+                                    <nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+ <!-- Breadcrumb navigation -->
+ <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'lawyer_details' lawyer.id %}">{{ lawyer.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Select Date</li>
+    </ol>
+</nav>
     <!-- Rest of your template content -->
     
     <div class="container py-5">
@@ -90,16 +170,17 @@
                     <p>No available time slots.</p>
                     {% endif %}
                 </form>
-                {% if messages %}
-                  <ul class="messages">
-                    {% for message in messages %}
-                      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
+                
             </div>
         </div>
     </div>
     <center><a href="{% url 'home' %}" class="go-to-home">Go To Homepage</a></center>
+    <div class="result">
+    {% if messages %}
+                  
+                    {% for message in messages %}
+                      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                                  {% endif %}</center>
 </body>
 </html>

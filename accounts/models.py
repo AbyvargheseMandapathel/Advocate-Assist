@@ -5,6 +5,8 @@ import datetime
 from datetime import datetime, timedelta ,time
 from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model  # Import the get_user_model function
+from django.utils.translation import gettext_lazy as _
+
 
 
 
@@ -522,10 +524,19 @@ class CurrentCase(models.Model):
 #         return f"Appointment with {self.lawyer.user.first_name} on {self.appointment_date}"
 
 class Appointment(models.Model):
+    
+    STATUS_CHOICES = (
+        ('not_paid', 'Not Paid'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+    )
+    
     lawyer = models.ForeignKey('LawyerProfile', on_delete=models.CASCADE)
     client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     appointment_date = models.DateField()
     time_slot = models.CharField(max_length=20)# Use TimeSlot model here
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_paid')
+    
 
     # Add any other fields or methods related to appointments
 

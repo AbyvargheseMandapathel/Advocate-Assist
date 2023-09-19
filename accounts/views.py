@@ -1668,8 +1668,9 @@ def select_date(request, lawyer_id):
             messages.error(request, 'Booking is not possible on a day marked as a holiday for the lawyer.')
         else:
             return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
+        
     
-    return render(request, 'select_date.html', {'lawyer': lawyer})
+    return render(request, 'select_date.html', {'lawyer': lawyer })
 
 def parse_time(time_str):
     try:

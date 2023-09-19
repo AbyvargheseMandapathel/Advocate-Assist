@@ -31,5 +31,6 @@ urlpatterns = [
     path('case_saved/', views.case_saved, name='case_saved'),
     path('update_lawyer_profile/<int:user_id>/', views.update_lawyer_profile, name='update_lawyer_profile'),
     path('profile/', views.profile, name='profile'),
+   
     
 ]
