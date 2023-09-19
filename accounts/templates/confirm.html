@@ -2,11 +2,12 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
     <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
@@ -17,65 +18,60 @@
     <link rel="stylesheet" href="{% static 'css/gijgo.css' %}">
     <link rel="stylesheet" href="{% static 'css/slicknav.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <!-- CSS here -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/add_user.css' %}">
-    <link rel="stylesheet" href="{% static 'css/navigation.css' %}">
-    <link rel="stylesheet" href="{% static 'css/breadcrumbs.css' %}">
-</head>
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        user-select: none;
-    }
 
-    .wrapper {
-        width: 100%;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-    }
-
-    .img-container {
-        width: 25em;
-        height: 25em;
-    }
-
-    .img-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .go-to-home,
-    .go-to-home:hover {
-        color: #fff;
-        text-decoration: none;
-        background-color: #f2c64d;
-        padding: 1em 1.5em;
-        border-radius: 2em;
-    }
-
-    p {
-        text-align: center;
-    }
-
-    .result {
-        padding-top: 3%;
-        align-items: center;
-        text-align: center;
-        color: red;
-    }
-
-    @media screen and (max-width: 771px) {
-        .img-container {
-            width: 15em;
-            height: 15em;
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            user-select: none;
         }
-    }
-</style>
+
+        .wrapper {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .img-container {
+            width: 25em;
+            height: 25em;
+        }
+
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .go-to-home,
+        .go-to-home:hover {
+            color: #fff;
+            text-decoration: none;
+            background-color: #f2c64d;
+            padding: 1em 1.5em;
+            border-radius: 2em;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        @media screen and (max-width: 771px) {
+            .img-container {
+                width: 15em;
+                height: 15em;
+            }
+        }
+    </style>
+
+</head>
+
 <body>
     <header>
         <div class="header-area ">
@@ -134,52 +130,20 @@
             </div>
         </div>
     </header>
- <!-- Breadcrumb navigation -->
- <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'login' %}">Dashboard</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Select Date</li>
-    </ol>
-</nav>
-    <!-- Rest of your template content -->
-    
-    <div class="container py-5">
-        <div class="row">
-            <div class="col-12 add-user-col d-flex justify-content-center">
-                <form class="add-user-form" method="post">
-                    {% csrf_token %}
-                    <h1 class="text-center my-4">Select A Date To Book</h1>
 
-                    <p>Selected Date: <span>{{ selected_date }}</span></p>
-                    {% if appointment_slots %}
-                    <div class="input-group">
-                        <label for="selected_slot">Selected Slot</label>
-                        <select name="selected_slot" id="selected_slot" required>
-                            {% for slot in appointment_slots %}
-                            <option value="{{ slot }}">{{ slot }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <button class="btn btn-warning" type="submit">Next</button>
-                    </div>
-                    {% else %}
-                    <p>No available time slots.</p>
-                    {% endif %}
-                </form>
-                
-            </div>
+    <div class="wrapper">
+        <div class="img-container">
+            <img src="{% static 'img/confirmed.png' %}" alt="404" />
         </div>
+        <p>
+            Booking Confirmed
+            <br>
+            please be on time!!
+        </p>
+
+        <a href="{% url 'login' %}" class="go-to-home">Go To Homepage</a>
     </div>
-    <center><a href="{% url 'home' %}" class="go-to-home">Go To Homepage</a></center>
-    <div class="result">
-    {% if messages %}
-                  
-                    {% for message in messages %}
-                      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                    {% endfor %}
-                                  {% endif %}</center>
+
 </body>
+
 </html>

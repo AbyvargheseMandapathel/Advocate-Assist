@@ -535,7 +535,7 @@ class Appointment(models.Model):
     client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     appointment_date = models.DateField()
     time_slot = models.CharField(max_length=20)# Use TimeSlot model here
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_paid')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='confirmed')
     
 
     # Add any other fields or methods related to appointments

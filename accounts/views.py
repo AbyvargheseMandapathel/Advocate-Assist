@@ -467,6 +467,10 @@ def home(request):
 def practice(request):
     return render(request, 'practice.html')
 
+    
+def confirm(request):
+    return render(request, 'confirm.html')
+
 def about(request):
     return render(request, 'about.html')
 
@@ -1740,7 +1744,7 @@ def book_lawyer(request, lawyer_id, selected_date):
                     appointment.save()
 
                     messages.success(request, 'Appointment booked successfully!')
-                    return redirect('home')  # Redirect to a success page
+                    return render(request, 'confirm.html')
                 else:
                     messages.error(request, 'Selected slot is not available. Please choose another slot.')
             else:
