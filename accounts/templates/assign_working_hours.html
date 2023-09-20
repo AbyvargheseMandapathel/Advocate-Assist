@@ -41,6 +41,12 @@
         input[type=checkbox] {
             accent-color: #ffc107;
         }
+        .result {
+        padding-top: 3%;
+        align-items: center;
+        text-align: center;
+        color: red;
+    }
     </style>
 </head>
 
@@ -110,6 +116,13 @@
             <li class="breadcrumb-item active" aria-current="page">Assign Working Hours</li>
         </ol>
     </nav>
+    <div class="result">
+        {% if messages %}
+                      
+                        {% for message in messages %}
+                          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                        {% endfor %}
+                                      {% endif %}</center></div>
     <div class="container py-5">
         <h1 class="text-center">Assign Your Working Hours</h1>
         <form method="post" action="{% url 'assign_working_hours' %}">

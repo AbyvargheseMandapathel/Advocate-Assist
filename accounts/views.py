@@ -47,7 +47,7 @@ def login_view(request):
         if request.user.user_type == 'admin':
             return redirect(reverse('admin_dashboard'))
         elif request.user.user_type == 'client':
-            return redirect(reverse('client_dashboard'))
+            return redirect(reverse('home'))
         elif request.user.user_type == 'lawyer':
             return redirect(reverse('lawyer_dashboard'))
         elif request.user.user_type == 'student':
@@ -1644,7 +1644,7 @@ def search_lawyers(request):
 #     ]
 
 #     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots ,'breadcrumbs': breadcrumbs ,'selected_time_slot_ids': selected_time_slot_ids})
-
+@login_required
 def assign_working_hours(request):
     if request.method == 'POST':
         print("Received a POST request")  # Debugging: Check if the request is received
@@ -1660,6 +1660,7 @@ def assign_working_hours(request):
 
                 # Clear existing working slots for the lawyer
                 lawyer.working_slots.clear()
+                lawyer.time_update = datetime.now()
 
                 # Add the selected time slots to the lawyer's working slots
                 lawyer.working_slots.set(selected_time_slots)
@@ -1806,6 +1807,10 @@ def book_lawyer(request, lawyer_id, selected_date):
         if request.method == 'POST':
             # Handle the form submission when the client books an appointment
             selected_slot = request.POST.get('selected_slot')
+            
+            # Check if the selected_date is within 7 days from the last update
+            if not lawyer.is_within_7_days(selected_date):
+                return HttpResponseBadRequest("Selected date is not within 7 days from the last update.")
 
             # Check if the selected slot is still available
             if selected_slot and selected_slot in appointment_slots:

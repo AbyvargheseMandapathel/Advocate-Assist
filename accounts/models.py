@@ -6,6 +6,8 @@ from datetime import datetime, timedelta ,time
 from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model  # Import the get_user_model function
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+
 
 
 
@@ -262,6 +264,7 @@ class LawyerProfile(models.Model):
     experience = models.IntegerField(null=True, blank=True)
     court = models.CharField(max_length=200, choices=COURT,blank=True)
     working_hours = models.ManyToManyField(TimeSlot, blank=True)
+    time_update = models.DateTimeField(null=True, blank=True)
     
     def get_available_time_slots(self, day_of_week):
         # Retrieve the time slots associated with this lawyer for the given day_of_week
@@ -291,6 +294,23 @@ class LawyerProfile(models.Model):
                     start_time += timedelta(minutes=15)  # Adjust the slot duration as needed
 
         return available_time_slots
+    
+    def is_within_7_days(self, date_to_check):
+        if self.time_update:
+            # Calculate the difference between the last update and the given date
+            time_difference = date_to_check - self.time_update.date()
+
+            # Check if the difference is within 7 days
+            if 0 <= time_difference.days <= 7:
+                return True
+
+        return False
+
+
+
+
+
+
 
     # def is_available(self, date, time_slot):
     #     # Check if the selected slot is available for booking on a specific date
@@ -542,3 +562,13 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f'Appointment with {self.lawyer} on {self.appointment_date} at {self.time_slot}'
+    
+    def clean(self):
+        # Calculate the 7-day window start date based on the lawyer's most recent working hours assignment date.
+        most_recent_working_hours_date = self.lawyer.working_slots.aggregate(models.Max('created_date'))['created_date__max']
+        
+        if most_recent_working_hours_date:
+            seven_days_ago = most_recent_working_hours_date + timedelta(days=7)
+            
+            if self.appointment_date < seven_days_ago.date():
+                raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
