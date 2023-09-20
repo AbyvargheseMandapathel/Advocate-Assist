@@ -1661,6 +1661,7 @@ def assign_working_hours(request):
                 # Clear existing working slots for the lawyer
                 lawyer.working_slots.clear()
                 lawyer.time_update = datetime.now()
+                lawyer.save()  # Save the lawyer object to persist changeslawyer.time_update = datetime.now()
 
                 # Add the selected time slots to the lawyer's working slots
                 lawyer.working_slots.set(selected_time_slots)
@@ -1673,7 +1674,7 @@ def assign_working_hours(request):
                     # Redirect to the dashboard or another page
                     return redirect('update')
                 else:
-                    return HttpResponseBadRequest("Please select at least one slot a day for a minimum of four days.")
+                    messages.error(request, 'Please atlest take any 4 days slot.')
         except Exception as e:
             # Log the error
             traceback.print_exc()
