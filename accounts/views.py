@@ -1756,8 +1756,11 @@ def select_date(request, lawyer_id):
         if LawyerDayOff.objects.filter(lawyer=lawyer, date=selected_date).exists():
             messages.error(request, 'Booking is not possible on a day marked as a holiday for the lawyer.')
         else:
-            return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
-        
+            # Check if the selected_date is within 7 days from the last update
+            if not lawyer.is_within_7_days(datetime.strptime(selected_date, '%Y-%m-%d').date()):
+                messages.error(request, 'Booking is only possible within 7 days from the last update of working hours.')
+            else:
+                return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
     
     return render(request, 'select_date.html', {'lawyer': lawyer })
 
