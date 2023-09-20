@@ -1261,6 +1261,24 @@ def all_bookings(request, lawyer_id=None, client_id=None):
     return render(request, 'bookings.html', context)
 
 
+@login_required
+def client_bookings(request, client_id):
+    # Get the client object based on the client_id
+    client = get_object_or_404(CustomUser, id=client_id)
+
+    # Retrieve bookings for the specific client
+    client_bookings = Appointment.objects.filter(client=client)
+
+    # Pass the filtered bookings to the template
+    context = {
+        'client': client,
+        'client_bookings': client_bookings,
+    }
+
+    return render(request, 'client_bookings.html', context)
+
+
+
 def list_lawyers(request):
     # Fetch all lawyer profiles from the database
     lawyers = LawyerProfile.objects.all()
