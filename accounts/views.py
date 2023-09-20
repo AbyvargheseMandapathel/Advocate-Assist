@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect ,get_object_or_404 ,HttpResponseRedirect
 from django.urls import reverse
 from .models import CustomUser, LawyerProfile , CurrentCase  
-from django.http import HttpResponseForbidden , HttpResponseNotFound , HttpResponse
+from django.http import HttpResponseForbidden , HttpResponseNotFound , HttpResponse ,HttpResponseBadRequest
 from django.core.mail import send_mail
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -1598,6 +1598,53 @@ def search_lawyers(request):
 #     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots})
 
 @login_required
+# def assign_working_hours(request):
+#     if request.method == 'POST':
+#         print("Received a POST request")  # Debugging: Check if the request is received
+
+#         selected_time_slot_ids = request.POST.getlist('selected_time_slots')
+#         selected_time_slots = TimeSlot.objects.filter(id__in=selected_time_slot_ids)
+
+#         try:
+#             if request.user.is_authenticated and hasattr(request.user, 'lawyer_profile'):
+#                 lawyer = request.user.lawyer_profile
+
+#                 print(f"User {request.user.username} is authenticated and has a lawyer profile")  # Debugging: Check user profile
+
+#                 # Clear existing working slots for the lawyer
+#                 lawyer.working_slots.clear()
+
+#                 # Add the selected time slots to the lawyer's working slots
+#                 lawyer.working_slots.set(selected_time_slots)
+
+#                 print("Working slots assigned successfully")  # Debugging: Check if slots are assigned successfully
+#                 print("Selected slot IDs:", [slot.id for slot in selected_time_slots])  # Debugging: Check selected slot IDs
+
+#                 # Redirect to the dashboard or another page
+#                 return redirect('update')
+#         except Exception as e:
+#             # Log the error
+#             traceback.print_exc()
+#             return HttpResponseServerError("An error occurred while saving data.")
+
+#     # Retrieve all available time slots to display in the form
+#     all_time_slots = TimeSlot.objects.all()
+    
+#     # Check if the user is authenticated and has a lawyer profile
+#     if request.user.is_authenticated and hasattr(request.user, 'lawyer_profile'):
+#         lawyer = request.user.lawyer_profile
+#         selected_time_slot_ids = lawyer.working_slots.values_list('id', flat=True)
+#     else:
+#         selected_time_slot_ids = []
+
+#     breadcrumbs = [
+#         ("Home", reverse("home")),
+#         ("lawyer_dashboard", reverse("lawyer_dashboard")),
+#         ("assign_working_hours", None),  # Current page (no link)
+#     ]
+
+#     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots ,'breadcrumbs': breadcrumbs ,'selected_time_slot_ids': selected_time_slot_ids})
+
 def assign_working_hours(request):
     if request.method == 'POST':
         print("Received a POST request")  # Debugging: Check if the request is received
@@ -1620,8 +1667,12 @@ def assign_working_hours(request):
                 print("Working slots assigned successfully")  # Debugging: Check if slots are assigned successfully
                 print("Selected slot IDs:", [slot.id for slot in selected_time_slots])  # Debugging: Check selected slot IDs
 
-                # Redirect to the dashboard or another page
-                return redirect('update')
+                # Check if the lawyer has selected at least one slot a day for a minimum of four days
+                if validate_working_hours(selected_time_slots):
+                    # Redirect to the dashboard or another page
+                    return redirect('update')
+                else:
+                    return HttpResponseBadRequest("Please select at least one slot a day for a minimum of four days.")
         except Exception as e:
             # Log the error
             traceback.print_exc()
@@ -1644,6 +1695,21 @@ def assign_working_hours(request):
     ]
 
     return render(request, 'assign_working_hours.html', {'all_time_slots': all_time_slots ,'breadcrumbs': breadcrumbs ,'selected_time_slot_ids': selected_time_slot_ids})
+
+def validate_working_hours(selected_time_slots):
+    # Create a dictionary to count slots for each day
+    day_slot_count = {}
+
+    for slot in selected_time_slots:
+        day = slot.day  # Assuming you have a 'day_of_week' attribute for each TimeSlot
+        if day in day_slot_count:
+            day_slot_count[day] += 1
+        else:
+            day_slot_count[day] = 1
+
+    # Check if at least one slot is selected for each day of the week for a minimum of four days
+    days_with_slots = [day for day, count in day_slot_count.items() if count > 0]
+    return len(days_with_slots) >= 4
     
 
 # def book_lawyer(request, lawyer_id):
