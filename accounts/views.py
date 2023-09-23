@@ -48,6 +48,8 @@ from django.http import JsonResponse
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
 import logging
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 logger = logging.getLogger(__name__)
 
@@ -2156,3 +2158,36 @@ def password_reset_confirm_student(request, uidb64, token):
         return render(request, 'password_reset_confirm_student.html', {'form': form})
     else:
         return render(request, '404.html')
+    
+def generate_appointment_pdf(request, appointment_id):
+    # Get the appointment object from the database
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+
+    # Create a response object with PDF content type
+    response = HttpResponse(content_type='application/pdf')
+
+    # Set the filename for the PDF
+    response['Content-Disposition'] = f'attachment; filename="appointment_{appointment.id}.pdf"'
+
+    # Create the PDF document
+    p = canvas.Canvas(response, pagesize=letter)
+
+    # Combine first_name and last_name to get full names
+    client_name = f"{appointment.client.first_name} {appointment.client.last_name}"
+    lawyer_name = f"{appointment.lawyer.user.first_name} {appointment.lawyer.user.last_name}"
+    
+    # Amount (1 INR)
+    amount = "1 INR"
+
+    p.drawString(100, 750, f'Appointment ID: {appointment.id}')
+    p.drawString(100, 730, f'Client: {client_name}')
+    p.drawString(100, 710, f'Lawyer: {lawyer_name}')
+    p.drawString(100, 690, f'Appointment Date: {appointment.appointment_date}')
+    p.drawString(100, 670, f'Appointment Time: {appointment.time_slot}')
+    p.drawString(100, 650, f'Amount: {amount}')  # Added amount
+
+    # Save the PDF document
+    p.showPage()
+    p.save()
+
+    return response

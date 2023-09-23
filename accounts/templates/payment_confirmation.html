@@ -15,5 +15,7 @@
     <!-- You can add more details or styling as needed -->
 
     <p>Thank you for your payment.</p>
+    <a href="{% url 'generate_appointment_pdf' appointment.id %}" class="btn btn-primary">Generate PDF</a>
+
 </body>
 </html>

@@ -44,6 +44,7 @@ urlpatterns = [
     # path('payment-confirmation/<int:appointment_id>/', views.payment_confirmation, name='payment_confirmation'),
     path('google', TemplateView.as_view(template_name="auth.html")),
     path('intern/', views.intern, name='intern'),
+    path('generate-pdf/<int:appointment_id>/', views.generate_appointment_pdf, name='generate_appointment_pdf'),
     
 ]
 
