@@ -1937,7 +1937,7 @@ def book_lawyer(request, lawyer_id, selected_date):
                     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
                     # Create an order with Razorpay
-                    order_amount = 1000  # Amount in paise (Change as needed)
+                    order_amount = 100  # Amount in paise (Change as needed)
                     order_currency = 'INR'
                     order_receipt = str(appointment.id)
                     order_notes = {'appointment_id': appointment.id}
@@ -1978,7 +1978,7 @@ def payment_confirmation(request, order_id):
             appointment.save()
 
             # Render the payment confirmation page with appointment details
-            return render(request, 'payment_confirmation.html')
+            return render(request, 'payment_confirmation.html', {'appointment': appointment})
         else:
             # Handle cases where the appointment status is already 'confirmed' or 'cancelled'
             return HttpResponse('Payment Failed')
