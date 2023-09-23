@@ -802,7 +802,7 @@ def student_dashboard(request):
 
         if student.is_approved:
             # Check if college and current CGPA fields are filled
-            if student.college and student.current_cgpa is not None:
+            if student.course and student.cgpa is not None:
                 recent_internships = Internship.objects.order_by('-pk')[:5]
                 return render(request, 'student/dashboard.html', {'user': request.user, 'recent_internships': recent_internships})
             else:
@@ -1890,6 +1890,7 @@ def intern(request):
         user.phone = phnno
         user.dob = dob
         user.address = address
+        user.user_type='student'
         user.save()
         
         # user = CustomUser.objects.create_user(
@@ -2010,7 +2011,7 @@ def list_student_requests(request):
     
     return render(request, 'admin/list_student_requests.html', context)
 
-@login_required
+
 def password_reset_confirm_student(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
