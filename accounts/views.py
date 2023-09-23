@@ -50,6 +50,11 @@ from django.views.decorators.csrf import csrf_exempt
 import logging
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from xhtml2pdf import pisa
+from io import BytesIO
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from io import BytesIO
 
 logger = logging.getLogger(__name__)
 
@@ -2159,35 +2164,47 @@ def password_reset_confirm_student(request, uidb64, token):
     else:
         return render(request, '404.html')
     
+
+
+
+
 def generate_appointment_pdf(request, appointment_id):
     # Get the appointment object from the database
     appointment = get_object_or_404(Appointment, id=appointment_id)
 
-    # Create a response object with PDF content type
-    response = HttpResponse(content_type='application/pdf')
+    # Prepare context data to be passed to the template
+    context = {
+        'appointment': appointment,
+        'client_name': f"{appointment.client.first_name} {appointment.client.last_name}",
+        'client_address': appointment.client.address,
+        'client_email': appointment.client.email,
+        'lawyer_name': f"{appointment.lawyer.user.first_name} {appointment.lawyer.user.last_name}",
+        'appointment_date': appointment.appointment_date,
+        'appointment_id': appointment.id,
+        'appointment_order_id': appointment.order_id,
+        'appointment_time': appointment.time_slot,
+        'amount': '1 INR',  # You can fetch this dynamically if needed
+    }
 
-    # Set the filename for the PDF
-    response['Content-Disposition'] = f'attachment; filename="appointment_{appointment.id}.pdf"'
+    # Render the HTML template with the context
+    pdf_html = render(request, 'receipt.html', context)
 
-    # Create the PDF document
-    p = canvas.Canvas(response, pagesize=letter)
+    # Create a BytesIO buffer to receive the PDF data
+    buffer = BytesIO()
 
-    # Combine first_name and last_name to get full names
-    client_name = f"{appointment.client.first_name} {appointment.client.last_name}"
-    lawyer_name = f"{appointment.lawyer.user.first_name} {appointment.lawyer.user.last_name}"
-    
-    # Amount (1 INR)
-    amount = "1 INR"
+    # Create the PDF file
+    pdf = pisa.pisaDocument(BytesIO(pdf_html.content), buffer)
 
-    p.drawString(100, 750, f'Appointment ID: {appointment.id}')
-    p.drawString(100, 730, f'Client: {client_name}')
-    p.drawString(100, 710, f'Lawyer: {lawyer_name}')
-    p.drawString(100, 690, f'Appointment Date: {appointment.appointment_date}')
-    p.drawString(100, 670, f'Appointment Time: {appointment.time_slot}')
-    p.drawString(100, 650, f'Amount: {amount}')  # Added amount
+    if not pdf.err:
+        # Set the response content type and filename
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="appointment_{appointment.id}.pdf"'
 
-    # Save the PDF document
-    p.showPage()
-    p.save()
+        # Get the value of the BytesIO buffer and add it to the response
+        pdf_data = buffer.getvalue()
+        buffer.close()
+        response.write(pdf_data)
 
-    return response
+        return response
+
+    return HttpResponse('PDF generation error')
