@@ -43,6 +43,14 @@ import traceback
 from django.utils.html import strip_tags
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.http import JsonResponse
+import razorpay
+from django.views.decorators.csrf import csrf_exempt
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 
@@ -1787,25 +1795,99 @@ def parse_time(time_str):
         return parsed_time
     except ValueError:
         return None
+    
+# @login_required
+# def book_lawyer(request, lawyer_id, selected_date):
+#     try:
+#         # Convert selected_date to a Python date object
+#         selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        
+#         # Get the current date
+#         current_date = timezone.now().date()
+
+#         # Check if the selected_date is in the past
+#         if selected_date < current_date:
+#             messages.error(request, 'Booking is not possible for past dates.')
+            
+
+#         # Get the lawyer object
+#         lawyer = LawyerProfile.objects.get(id=lawyer_id)
+        
+        
+        
+
+#         # Retrieve the lawyer's working time slots for the selected date
+#         working_time_slots = TimeSlot.objects.filter(lawyers=lawyer, day=selected_date.strftime('%A')).order_by('start_time')
+
+#         # Initialize a list to store available appointment slots
+#         appointment_slots = []
+
+#         # Iterate through the working time slots and generate appointment slots
+#         for time_slot in working_time_slots:
+#             start_time = datetime.combine(selected_date, time_slot.start_time)
+#             end_time = datetime.combine(selected_date, time_slot.end_time)
+
+#             current_time = start_time
+#             while current_time <= end_time:
+#                 appointment_slots.append(current_time.strftime('%I:%M %p'))
+#                 current_time += timedelta(minutes=15)
+
+#         if request.method == 'POST':
+#             # Handle the form submission when the client books an appointment
+#             selected_slot = request.POST.get('selected_slot')
+            
+#             # Check if the selected_date is within 7 days from the last update
+#             if not lawyer.is_within_7_days(selected_date):
+#                 return HttpResponseBadRequest("Selected date is not within 7 days from the last update.")
+
+#             # Check if the selected slot is still available
+#             if selected_slot and selected_slot in appointment_slots:
+#                 # Check if the selected slot is available for booking
+#                 if lawyer.is_available(selected_date, selected_slot):
+#                     try:
+#                         # Check if the selected slot is in the correct time format
+#                         selected_time = datetime.strptime(selected_slot, '%I:%M %p').time()
+#                     except ValueError:
+#                         messages.error(request, 'Invalid time format. Please choose a valid time from the list (e.g., 08:45 AM).')
+#                         return render(request, 'book_lawyer.html', {'selected_date': selected_date, 'appointment_slots': appointment_slots})
+
+#                     # Create an Appointment record
+#                     appointment = Appointment(
+#                         lawyer=lawyer,
+#                         client=request.user,
+#                         appointment_date=selected_date,
+#                         time_slot=selected_time  # Use the selected_time instead of selected_slot
+#                     )
+#                     appointment.save()
+
+#                     messages.success(request, 'Appointment booked successfully!')
+#                     return render(request, 'confirm.html')
+#                 else:
+#                     messages.error(request, 'Selected slot is not available. Please choose another slot.')
+#             else:
+#                 messages.error(request, 'Invalid selected slot format. Please choose a valid slot from the list.')
+
+#         return render(request, 'book_lawyer.html', {'selected_date': selected_date, 'appointment_slots': appointment_slots})
+#     except LawyerProfile.DoesNotExist:
+#         messages.error(request, 'Lawyer not found.')
+#         return redirect('home')
+
+
 @login_required
 def book_lawyer(request, lawyer_id, selected_date):
     try:
         # Convert selected_date to a Python date object
         selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
-        
+
         # Get the current date
-        current_date = timezone.now().date()
+        current_date = datetime.now().date()
 
         # Check if the selected_date is in the past
         if selected_date < current_date:
             messages.error(request, 'Booking is not possible for past dates.')
-            
 
         # Get the lawyer object
         lawyer = LawyerProfile.objects.get(id=lawyer_id)
-        
-        
-        
 
         # Retrieve the lawyer's working time slots for the selected date
         working_time_slots = TimeSlot.objects.filter(lawyers=lawyer, day=selected_date.strftime('%A')).order_by('start_time')
@@ -1826,7 +1908,7 @@ def book_lawyer(request, lawyer_id, selected_date):
         if request.method == 'POST':
             # Handle the form submission when the client books an appointment
             selected_slot = request.POST.get('selected_slot')
-            
+
             # Check if the selected_date is within 7 days from the last update
             if not lawyer.is_within_7_days(selected_date):
                 return HttpResponseBadRequest("Selected date is not within 7 days from the last update.")
@@ -1851,8 +1933,28 @@ def book_lawyer(request, lawyer_id, selected_date):
                     )
                     appointment.save()
 
-                    messages.success(request, 'Appointment booked successfully!')
-                    return render(request, 'confirm.html')
+                    # Initialize Razorpay client
+                    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+                    # Create an order with Razorpay
+                    order_amount = 1000  # Amount in paise (Change as needed)
+                    order_currency = 'INR'
+                    order_receipt = str(appointment.id)
+                    order_notes = {'appointment_id': appointment.id}
+                    order_payload = {
+                        'amount': order_amount,
+                        'currency': order_currency,
+                        'receipt': order_receipt,
+                        'notes': order_notes,
+                    }
+                    order = client.order.create(data=order_payload)
+
+                    # Update the appointment with the Razorpay order ID
+                    appointment.order_id = order.get('id')
+                    appointment.save()
+
+                    # Render the Razorpay payment page
+                    return render(request, 'razorpay_payment.html', {'order': order, 'appointment': appointment})
                 else:
                     messages.error(request, 'Selected slot is not available. Please choose another slot.')
             else:
@@ -1862,6 +1964,29 @@ def book_lawyer(request, lawyer_id, selected_date):
     except LawyerProfile.DoesNotExist:
         messages.error(request, 'Lawyer not found.')
         return redirect('home')
+
+@csrf_exempt
+def payment_confirmation(request, order_id):
+    try:
+        # Retrieve the appointment based on the order_id
+        appointment = Appointment.objects.get(order_id=order_id)
+
+        # Check if the appointment status is 'not_paid'
+        if appointment.status == 'not_paid':
+            # Update the appointment status to 'confirmed' since payment is successful
+            appointment.status = 'confirmed'
+            appointment.save()
+
+            # Render the payment confirmation page with appointment details
+            return render(request, 'payment_confirmation.html')
+        else:
+            # Handle cases where the appointment status is already 'confirmed' or 'cancelled'
+            return HttpResponse('Payment Failed')
+
+    except Appointment.DoesNotExist:
+        # Handle cases where the appointment with the given order_id does not exist
+        logger.error(f"Appointment with order_id {order_id} does not exist")
+        return HttpResponse('Appointment DoesNotExist')
 
 
 def intern(request):

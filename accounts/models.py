@@ -564,8 +564,37 @@ class CurrentCase(models.Model):
 #     def __str__(self):
 #         return f"Appointment with {self.lawyer.user.first_name} on {self.appointment_date}"
 
-class Appointment(models.Model):
+# class Appointment(models.Model):
     
+#     STATUS_CHOICES = (
+#         ('not_paid', 'Not Paid'),
+#         ('confirmed', 'Confirmed'),
+#         ('cancelled', 'Cancelled'),
+#     )
+    
+#     lawyer = models.ForeignKey('LawyerProfile', on_delete=models.CASCADE)
+#     client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+#     appointment_date = models.DateField()
+#     time_slot = models.CharField(max_length=20)# Use TimeSlot model here
+#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_paid')
+    
+
+#     # Add any other fields or methods related to appointments
+
+#     def __str__(self):
+#         return f'Appointment with {self.lawyer} on {self.appointment_date} at {self.time_slot}'
+    
+#     def clean(self):
+#         # Calculate the 7-day window start date based on the lawyer's most recent working hours assignment date.
+#         most_recent_working_hours_date = self.lawyer.working_slots.aggregate(models.Max('created_date'))['created_date__max']
+        
+#         if most_recent_working_hours_date:
+#             seven_days_ago = most_recent_working_hours_date + timedelta(days=7)
+            
+#             if self.appointment_date < seven_days_ago.date():
+#                 raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
+
+class Appointment(models.Model):
     STATUS_CHOICES = (
         ('not_paid', 'Not Paid'),
         ('confirmed', 'Confirmed'),
@@ -575,10 +604,10 @@ class Appointment(models.Model):
     lawyer = models.ForeignKey('LawyerProfile', on_delete=models.CASCADE)
     client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     appointment_date = models.DateField()
-    time_slot = models.CharField(max_length=20)# Use TimeSlot model here
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='confirmed')
+    time_slot = models.CharField(max_length=20)  # Use TimeSlot model here
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_paid')
+    order_id = models.CharField(max_length=100, blank=True, null=True)  # Add this field for Razorpay order ID
     
-
     # Add any other fields or methods related to appointments
 
     def __str__(self):
@@ -589,9 +618,10 @@ class Appointment(models.Model):
         most_recent_working_hours_date = self.lawyer.working_slots.aggregate(models.Max('created_date'))['created_date__max']
         
         if most_recent_working_hours_date:
-            seven_days_ago = most_recent_working_hours_date + timedelta(days=7)
+            seven_days_ago = most_recent_working_hours_date + timedelta(days=14)
             
             if self.appointment_date < seven_days_ago.date():
                 raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
+
             
             

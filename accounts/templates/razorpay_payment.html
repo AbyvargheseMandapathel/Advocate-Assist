@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Payment</title>
+    <!-- Include Razorpay's JavaScript SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h1>Make a Payment</h1>
+
+    <!-- Payment Form -->
+    <form id="payment-form">
+        <!-- Name -->
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+
+        <!-- Email -->
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br>
+
+        <!-- Phone Number -->
+        <label for="phone">Phone Number:</label>
+        <input type="tel" id="phone" name="phone" required><br>
+
+        <!-- Amount (you can set this dynamically in JavaScript) -->
+        <input type="hidden" id="amount" name="amount" value="100">
+
+        <!-- Razorpay Payment Button -->
+        <button type="button" id="rzp-button">Pay Now</button>
+    </form>
+
+    <script>
+        // Razorpay Configuration
+        // Razorpay Configuration
+// Razorpay Configuration
+var options = {
+    key: 'rzp_test_cvGs8NAQTlqQrP', // Replace with your Razorpay API key
+    amount: document.getElementById('amount').value, // Amount in paise (Example: 1000 paise = ₹10)
+    currency: 'INR', // Currency code (INR for Indian Rupees)
+    name: 'Advocate Assist',
+    description: 'Payment for Legal Services',
+    image: 'https://your-company-logo-url.com/logo.png', // URL to your company logo (optional)
+    handler: function (response) {
+        var paymentId = response.razorpay_payment_id;
+        var orderId = response.razorpay_order_id; 
+
+        // Log the appointmentId to the console to check its value
+        console.log("orderId:", orderId);
+        console.log("paymentId:", paymentId);
+
+        // Check this line
+        console.log("Redirecting to:", '/payment-confirmation/' + orderId + '/');
+        window.location.href = '/payment-confirmation/' + orderId + '/';
+    },
+    prefill: {
+        name: document.getElementById('name').value, // User's full name
+        email: document.getElementById('email').value, // User's email address
+        contact: document.getElementById('phone').value // User's phone number
+    }
+};
+
+// Create a Razorpay payment form
+var rzp = new Razorpay(options);
+
+// Attach a click event handler to the payment button
+document.getElementById('rzp-button').addEventListener('click', function () {
+    rzp.open();
+});
+
+    </script>
+</body>
+</html>
