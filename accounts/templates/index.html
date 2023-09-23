@@ -49,6 +49,55 @@
             #navigation li:last-child {
                 margin-right: 0; /* Remove margin from the last item to avoid extra spacing */
             }
+
+            .lawyer-card-row {
+    row-gap: 2em;
+}
+
+.lawyer-card {
+    width: 100%;
+}
+
+.lawyer-card-body {
+    width: 100%;
+    height: 17em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #eeebeb63;
+    border-radius: 5px;
+}
+
+.lawyer-card-body:hover {
+    background-color: #eeebebd7;
+}
+
+.lawyer-card-body figure {
+    height: 70%;
+    width: 100%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    margin: 0;
+}
+
+.lawyer-card-body figure img {
+    width: 10em;
+    height: 10em;
+    border-radius: 50%;
+}
+
+.lawyer-card-body h5,
+.lawyer-card-body p {
+    margin: 0;
+    text-align: center;
+    font-size: 18px;
+}
+
+.lawyer-card-body p {
+    font-size: 13px;
+}
         </style>
     <header>
         <div class="header-area ">
@@ -83,7 +132,6 @@
                                         {% if user.is_authenticated %}
                                         <li><a href="{% url 'client_bookings' client_id=request.user.id %}">Bookings</a></li> 
                                         <li><a href="{% url 'list_cases' %}">Cases</a></li>
-
                                         <li>
                                             <a href="#">Welcome {{ user.first_name }}<i class="ti-angle-down"></i></a>
                                             <ul class="submenu">
@@ -96,6 +144,7 @@
                                         
                                         <li><a href="{% url 'signup' %}">Signup</a></li>
                                         <li><a href="{% url 'login' %}">Login</a></li>
+                                        <li><a href="{% url 'intern' %}">Intern</a></li>
                                         {% endif %}
                                     </ul>
                                 </nav>
@@ -352,7 +401,8 @@
                             </div>
                         </div>
                     </div>
-            <div class="row">
+                    <div class="row g-5 lawyer-card-row">
+                        <!-- Use Django for loop to render lawyers -->
                 {% for lawyer in lawyer_info %}
                 <div class="col-xl-4 col-md-6 col-lg-4">
                     <div class="single_loyers text-center">
@@ -380,7 +430,7 @@
             </div>
         </div>
     </div> {% endcomment %}
-    <!-- our_loyers-end  -->
+    our_loyers-end 
 
     <!-- testmonial_area_start  -->
     <div class="testmonial_area testmonial_bg_1 overlay2">

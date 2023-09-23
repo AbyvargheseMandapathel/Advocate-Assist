@@ -8,12 +8,6 @@ from django.contrib.auth import get_user_model  # Import the get_user_model func
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
-
-
-
-
-
-
 class CustomUser(AbstractUser):
     USER_TYPES = (
         ('admin', 'Admin'),
@@ -301,7 +295,7 @@ class LawyerProfile(models.Model):
             time_difference = date_to_check - self.time_update.date()
 
             # Check if the difference is within 7 days
-            if 0 <= time_difference.days <= 7:
+            if 0 <= time_difference.days <= 14:
                 return True
 
         return False
@@ -416,15 +410,42 @@ class Booking(models.Model):
     def __str__(self):
         return self.user.email
     
-class Student(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
-    college = models.CharField(max_length=100)
-    current_cgpa = models.DecimalField(max_digits=3, decimal_places=2, null=False)
-    is_approved = models.BooleanField(default=False)
+# class Student(models.Model):
+#     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
+#     college = models.CharField(max_length=100)
+#     current_cgpa = models.DecimalField(max_digits=3, decimal_places=2, null=False)
+#     is_approved = models.BooleanField(default=False)
     
+
+#     def __str__(self):
+#         return f"{self.user.first_name} {self.user.last_name}"
+
+class Student(models.Model):
+
+    SPECIALIZATIONS = (
+        ('family', 'Family Lawyer'),
+        ('criminal', 'Criminal Lawyer'),
+        ('consumer', 'Consumer Lawyer'),
+        ('corporate', 'Corporate Lawyer'),
+        ('civilrights', 'Civil Rights Lawyer'),
+        ('divorce', 'Divorce Lawyer'),
+        # Add more specializations as needed
+    )
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
+    course = models.CharField(max_length=100, blank=True)
+    course_place = models.CharField(max_length=100, blank=True)
+    duration_of_course = models.CharField(max_length=20, blank=True)
+    specialization = models.CharField(max_length=50, choices=SPECIALIZATIONS, blank=True)
+    year_of_pass = models.IntegerField(blank=True, null=True)
+    cgpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
+    experience = models.TextField(blank=True)  # You can use a TextField for experience details
+    adhaar_no = models.CharField(max_length=12, blank=True, unique=True)
+    adhaar_pic = models.ImageField(upload_to='student_uploads/', blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
+     
     
     
 class Internship(models.Model):
@@ -572,3 +593,5 @@ class Appointment(models.Model):
             
             if self.appointment_date < seven_days_ago.date():
                 raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
+            
+            

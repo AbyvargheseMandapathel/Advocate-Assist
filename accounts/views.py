@@ -40,17 +40,27 @@ from pytz import timezone as pytz_timezone
 from .utils import validate_date, validate_time
 from django.http import HttpResponseServerError
 import traceback
+from django.utils.html import strip_tags
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth import get_user_model
+
 
 
 def login_view(request):
     if request.user.is_authenticated:
-        if request.user.user_type == 'admin':
+        user = request.user  # Get the authenticated user
+        if user.user_type == 'admin':
             return redirect(reverse('admin_dashboard'))
-        elif request.user.user_type == 'client':
+        elif user.user_type == 'client':
             return redirect(reverse('home'))
-        elif request.user.user_type == 'lawyer':
-            return redirect(reverse('lawyer_dashboard'))
-        elif request.user.user_type == 'student':
+        elif user.user_type == 'lawyer':
+            # Assuming you have a one-to-one relationship between CustomUser and LawyerProfile
+            lawyer_profile = LawyerProfile.objects.get(user=user)
+            if lawyer_profile.time_update is None or (timezone.now() - lawyer_profile.time_update).days > 14:
+                return redirect(reverse('assign_working_hours'))
+            else:
+                return redirect(reverse('lawyer_dashboard'))
+        elif user.user_type == 'student':
             return redirect(reverse('student_dashboard'))
     
     if request.method == 'POST':
@@ -64,14 +74,19 @@ def login_view(request):
             elif user.user_type == 'client':
                 return redirect(reverse('client_dashboard'))
             elif user.user_type == 'lawyer':
-                return redirect(reverse('lawyer_dashboard'))
+                # Assuming you have a one-to-one relationship between CustomUser and LawyerProfile
+                lawyer_profile = LawyerProfile.objects.get(user=user)
+                if lawyer_profile.time_update is None or (timezone.now() - lawyer_profile.time_update).days > 14:
+                    return redirect(reverse('assign_working_hours'))
+                else:
+                    return redirect(reverse('lawyer_dashboard'))
             elif user.user_type == 'student':
                 return redirect(reverse('student_dashboard'))
-            
         else:
             messages.error(request, 'Invalid email or password. Please try again')
     
     return render(request, 'login.html')
+    
 
 def signup_view(request):
     if request.user.is_authenticated:
@@ -1759,7 +1774,7 @@ def select_date(request, lawyer_id):
         else:
             # Check if the selected_date is within 7 days from the last update
             if not lawyer.is_within_7_days(datetime.strptime(selected_date, '%Y-%m-%d').date()):
-                messages.error(request, 'Booking is only possible within 7 days from the last update of working hours.')
+                messages.error(request, 'Booking is only possible within 14 days from the last update of working hours.')
             else:
                 return redirect('book_lawyer', lawyer_id=lawyer_id, selected_date=selected_date)
     
@@ -1847,3 +1862,171 @@ def book_lawyer(request, lawyer_id, selected_date):
     except LawyerProfile.DoesNotExist:
         messages.error(request, 'Lawyer not found.')
         return redirect('home')
+
+
+def intern(request):
+    if request.method == 'POST':
+        # Assuming all these fields are present in your HTML form
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        email = request.POST['email']  # Updated field name
+        phnno = request.POST['phone']
+        dob = request.POST['dob']
+        address = request.POST['address']
+        course = request.POST['course']
+        course_place = request.POST['course_place']  # Updated field name
+        duration_of_course = request.POST['duration_of_course']  # Updated field name
+        specialization = request.POST['specialization']  # Updated field name
+        year_of_pass = request.POST['year_of_pass']  # Updated field name
+        cgpa = request.POST['cgpa']
+        experience = request.POST['experience']
+        adhaar_no = request.POST['adhaar_no']  # Updated field name
+        pic_of_aadhaar = request.FILES['adhaar_pic']  # Assuming it's a file input
+
+        # Create a new CustomUser instance
+        user = CustomUser.objects.create_user(username=email,email=email)
+        user.first_name = first_name
+        user.last_name = last_name
+        user.phone = phnno
+        user.dob = dob
+        user.address = address
+        user.save()
+        
+        # user = CustomUser.objects.create_user(
+        #     username=email,
+        #     email=email,
+        #     user_type='lawyer',
+        #     first_name=first_name,
+        #     last_name=last_name,
+        #     phone = phone,
+        # )
+
+        # Create a new Student instance and link it to the CustomUser
+        student = Student.objects.create(user=user)
+        student.course = course  # Updated field name
+        student.course_place = course_place
+        student.duration_of_course = duration_of_course
+        student.specialization = specialization
+        student.year_of_pass = year_of_pass
+        student.cgpa = cgpa
+        student.experience = experience
+        student.adhaar_no = adhaar_no
+        student.adhaar_pic = pic_of_aadhaar
+        student.save()
+
+        # Now you have saved the data to both CustomUser and Student models
+        # You can add additional fields and validation as needed
+
+        # Redirect to a success page or do something else
+        # Redirect to a success page or do something else
+        return HttpResponse('Application submitted successfully.')  # Replace 'success_page' with your actual success page URL
+
+    return render(request, 'student/intern.html')  # Replace 'intern_form.html' with your actual template name
+
+
+User = get_user_model()
+
+@login_required
+def approve_student(request, student_id):
+    if not request.user.user_type == 'admin':
+        return render(request, '404.html')
+    
+    try:
+        student = Student.objects.get(id=student_id)
+        student.is_approved = True
+        student.save()
+        
+        # Send an email to the approved student with a link to set the password
+        subject = 'Welcome to Our Platform'
+        from_email = 'your_email@gmail.com'  # Change to your email
+        recipient_list = [student.user.email]
+        
+        # Create a unique password reset link
+        uid = urlsafe_base64_encode(force_bytes(student.user.pk))
+        token = default_token_generator.make_token(student.user)
+        password_reset_url = f'http://127.0.0.1:8000/accounts/set_password/{uid}/{token}/'
+        
+        context = {
+            'user': student.user,
+            'password_reset_url': password_reset_url,
+        }
+        
+        html_message = render_to_string('password_reset_email.html', context)
+        plain_message = strip_tags(html_message)
+        
+        send_mail(subject, plain_message, from_email, recipient_list, html_message=html_message)
+        
+        return redirect('list_student_requests')
+    except Student.DoesNotExist:
+        return render(request, '404.html')
+
+@login_required
+def reject_student(request, student_id):
+    if not request.user.user_type == 'admin':
+        return render(request, '404.html')
+    
+    try:
+        student = Student.objects.get(id=student_id)
+        student.delete()  # You can choose to delete the student's record or mark them as rejected
+        student.user.delete()
+        
+        
+        # Send a rejection email to the student
+        subject = 'Application Status: Rejected'
+        from_email = 'your_email@gmail.com'  # Change to your email
+        recipient_list = [student.user.email]
+        
+        context = {
+            'user': student.user,
+        }
+        
+        html_message = render_to_string('rejection_email.html', context)
+        plain_message = strip_tags(html_message)
+        
+        send_mail(subject, plain_message, from_email, recipient_list, html_message=html_message)
+        
+        return redirect('list_student_requests')
+    except Student.DoesNotExist:
+        return render(request, '404.html')
+
+@login_required
+def list_student_requests(request):
+    if not request.user.user_type == 'admin':
+        return render(request, '404.html')
+    
+    # Get all student requests
+    student_requests = Student.objects.filter(is_approved=False)
+    
+    # Determine which students are eligible for approval
+    eligible_students = [student for student in student_requests if student.cgpa >= 7.5]
+    
+    # Determine which students need to be rejected
+    rejected_students = [student for student in student_requests if student.cgpa < 7.5]
+    
+    context = {
+        'eligible_students': eligible_students,
+        'rejected_students': rejected_students,
+    }
+    
+    return render(request, 'admin/list_student_requests.html', context)
+
+@login_required
+def password_reset_confirm_student(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('login')  # Redirect to the login page after a successful reset
+        else:
+            form = SetPasswordForm(user)
+
+        return render(request, 'password_reset_confirm_student.html', {'form': form})
+    else:
+        return render(request, '404.html')

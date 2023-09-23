@@ -41,6 +41,7 @@ urlpatterns = [
     path('select-date/<int:lawyer_id>/', views.select_date, name='select_date'),
     path('book_lawyer/<int:lawyer_id>/<str:selected_date>/', views.book_lawyer, name='book_lawyer'),
     path('google', TemplateView.as_view(template_name="auth.html")),
+    path('intern/', views.intern, name='intern'),
     
 ]
 
