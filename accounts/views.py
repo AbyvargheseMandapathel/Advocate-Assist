@@ -50,7 +50,6 @@ from django.views.decorators.csrf import csrf_exempt
 import logging
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from xhtml2pdf import pisa
 from io import BytesIO
 from django.template.loader import get_template
 from xhtml2pdf import pisa
