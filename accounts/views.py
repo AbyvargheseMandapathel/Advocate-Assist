@@ -2019,6 +2019,11 @@ def intern(request):
             messages.error(request, 'Email already exists.')
             return render(request, 'student/intern.html')
         # Check if the email is already in use
+        if CustomUser.objects.filter(adhaar_no=adhaar_no).exists():
+            messages.error(request, 'Adhar Number already exists.')
+            return render(request, 'student/intern.html')
+        
+         # Check if the email is already in use
         if CustomUser.objects.filter(phone=phnno).exists():
             messages.error(request, 'Phone already exists.')
             return render(request, 'student/intern.html')
