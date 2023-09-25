@@ -45,6 +45,7 @@ urlpatterns = [
     path('google', TemplateView.as_view(template_name="auth.html")),
     path('intern/', views.intern, name='intern'),
     path('generate-pdf/<int:appointment_id>/', views.generate_appointment_pdf, name='generate_appointment_pdf'),
+    path('student/<int:student_id>/', views.student_detail, name='student_detail'),
     
 ]
 

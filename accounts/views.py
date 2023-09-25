@@ -2207,3 +2207,11 @@ def generate_appointment_pdf(request, appointment_id):
         return response
 
     return HttpResponse('PDF generation error')
+
+
+def student_detail(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    context = {
+        'student': student,
+    }
+    return render(request, 'student_detail.html', context)
