@@ -607,6 +607,7 @@ class Appointment(models.Model):
     time_slot = models.CharField(max_length=20)  # Use TimeSlot model here
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_paid')
     order_id = models.CharField(max_length=100, blank=True, null=True)  # Add this field for Razorpay order ID
+    payment_id = models.CharField(max_length=100, blank=True)
     
     # Add any other fields or methods related to appointments
 
