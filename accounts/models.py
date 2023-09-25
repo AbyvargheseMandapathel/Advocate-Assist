@@ -431,14 +431,23 @@ class Student(models.Model):
         ('divorce', 'Divorce Lawyer'),
         # Add more specializations as needed
     )
+    
+    SPECIALIZATIONS = (
+        ('2023', '2023'),
+        ('2024', '2024'),
+        ('2025', '2025'),
+        ('2026', '2026'),
+        ('2027', '2027'),
+        # Add more specializations as needed
+    )
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='student_profile')
     course = models.CharField(max_length=100, blank=True)
     course_place = models.CharField(max_length=100, blank=True)
     duration_of_course = models.CharField(max_length=20, blank=True)
     specialization = models.CharField(max_length=50, choices=SPECIALIZATIONS, blank=True)
-    year_of_pass = models.IntegerField(blank=True, null=True)
+    year_of_pass = models.CharField(max_length=50, choices=SPECIALIZATIONS, blank=True,null=True)
     cgpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
-    experience = models.TextField(blank=True)  # You can use a TextField for experience details
+    experience = models.TextField(blank=True,null=True)  # You can use a TextField for experience details
     adhaar_no = models.CharField(max_length=12, blank=True, unique=True)
     adhaar_pic = models.ImageField(upload_to='student_uploads/', blank=True, null=True)
     is_approved = models.BooleanField(default=False)

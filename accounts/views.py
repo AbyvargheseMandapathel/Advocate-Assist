@@ -2013,6 +2013,36 @@ def intern(request):
         experience = request.POST['experience']
         adhaar_no = request.POST['adhaar_no']  # Updated field name
         pic_of_aadhaar = request.FILES['adhaar_pic']  # Assuming it's a file input
+        
+        # Check if the email is already in use
+        if CustomUser.objects.filter(email=email).exists():
+            messages.error(request, 'Email already exists.')
+            return render(request, 'student/intern.html')
+        # Check if the email is already in use
+        if CustomUser.objects.filter(phone=phnno).exists():
+            messages.error(request, 'Phone already exists.')
+            return render(request, 'student/intern.html')
+        
+        # Check if phnno contains only numeric digits
+        if not re.match("^[0-9]+$", phnno):
+            messages.error(request, 'Phone should only contain numeric digits.')
+            return render(request, 'student/intern.html')
+        
+        # Calculate age based on the provided DOB
+        try:
+            dob_date = date.fromisoformat(dob)
+            today = date.today()
+            age = today.year - dob_date.year - ((today.month, today.day) < (dob_date.month, dob_date.day))
+        except ValueError:
+            messages.error(request, 'Invalid date format. Please use YYYY-MM-DD.')
+            return render(request, 'student/intern.html')
+
+        # Check if the age is less than 18
+        if age < 18:
+            messages.error(request, 'You must be at least 18 years old to sign up.')
+            return render(request, 'student/intern.html')
+            
+        
 
         # Create a new CustomUser instance
         user = CustomUser.objects.create_user(username=email,email=email)
