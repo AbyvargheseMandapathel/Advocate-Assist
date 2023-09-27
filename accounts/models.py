@@ -7,6 +7,8 @@ from taggit.managers import TaggableManager
 from django.contrib.auth import get_user_model  # Import the get_user_model function
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from .constants import PaymentStatus
+
 
 class CustomUser(AbstractUser):
     USER_TYPES = (
@@ -614,9 +616,10 @@ class Appointment(models.Model):
     client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     appointment_date = models.DateField()
     time_slot = models.CharField(max_length=20)  # Use TimeSlot model here
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_paid')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PaymentStatus.PENDING)
     order_id = models.CharField(max_length=100, blank=True, null=True)  # Add this field for Razorpay order ID
     razorpay_payment_id = models.CharField(max_length=255, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True,null=True)
     
     # Add any other fields or methods related to appointments
 
@@ -632,6 +635,15 @@ class Appointment(models.Model):
             
             if self.appointment_date < seven_days_ago.date():
                 raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
+            
+    def save_payment_data(self, payment_id, signature_id):
+        """
+        Save the Razorpay payment ID and signature ID for this appointment.
+        """
+        self.razorpay_payment_id = payment_id
+        self.razorpay_signature = signature_id
+        self.status = 'confirmed'  # You may want to update the status here as well
+        self.save()
 
             
             

@@ -40,12 +40,13 @@ urlpatterns = [
     path('assign-working-hours/', views.assign_working_hours, name='assign_working_hours'),
     path('select-date/<int:lawyer_id>/', views.select_date, name='select_date'),
     path('book_lawyer/<int:lawyer_id>/<str:selected_date>/', views.book_lawyer, name='book_lawyer'),
-    path('payment-confirmation/<str:order_id>/', views.payment_confirmation, name='payment_confirmation'),
+    # path('payment-confirmation/<str:order_id>/', views.payment_confirmation, name='payment_confirmation'),
     # path('payment-confirmation/<int:appointment_id>/', views.payment_confirmation, name='payment_confirmation'),
     path('google', TemplateView.as_view(template_name="auth.html")),
     path('intern/', views.intern, name='intern'),
     path('generate-pdf/<int:appointment_id>/', views.generate_appointment_pdf, name='generate_appointment_pdf'),
     path('student/<int:student_id>/', views.student_detail, name='student_detail'),
+    path("callback/", views.callback, name="callback"),
     
 ]
 

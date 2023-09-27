@@ -54,6 +54,10 @@ from io import BytesIO
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
+import json
+from .constants import PaymentStatus
+from django.views.decorators.http import require_POST
+
 
 logger = logging.getLogger(__name__)
 
@@ -1943,15 +1947,17 @@ def book_lawyer(request, lawyer_id, selected_date):
                     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
                     # Create an order with Razorpay
-                    order_amount = 100  # Amount in paise (Change as needed)
+                    order_amount = 10000  # Amount in paise (Change as needed)
                     order_currency = 'INR'
-                    order_receipt = str(appointment.id)
-                    order_notes = {'appointment_id': appointment.id}
+                    # order_receipt = str(appointment.id)
+                    # order_notes = {'appointment_id': appointment.id}
                     order_payload = {
                         'amount': order_amount,
                         'currency': order_currency,
-                        'receipt': order_receipt,
-                        'notes': order_notes,
+                        # 'receipt': order_receipt,
+                        # 'notes': order_notes,
+                        'payment_capture':"1"
+                        
                     }
                     order = client.order.create(data=order_payload)
 
@@ -1959,8 +1965,22 @@ def book_lawyer(request, lawyer_id, selected_date):
                     appointment.order_id = order.get('id')
                     appointment.save()
 
-                    # Render the Razorpay payment page
-                    return render(request, 'razorpay_payment.html', {'order': order, 'appointment': appointment})
+                    # # Render the Razorpay payment page
+                    # return render(request, 'razorpay_payment.html', {'order': order, 'appointment': appointment})
+                    
+                    return render(
+            request,
+            "razorpay_payment.html",
+            {
+                "callback_url": "http://" + "127.0.0.1:8000" + "/callback/",
+                "razorpay_key": 'rzp_test_cvGs8NAQTlqQrP',
+                "order": order,
+                'appointment':appointment,
+                'lawyer_id': lawyer_id,
+                'selected_date': selected_date,
+            },
+        )
+                    
                 else:
                     messages.error(request, 'Selected slot is not available. Please choose another slot.')
             else:
@@ -1971,28 +1991,180 @@ def book_lawyer(request, lawyer_id, selected_date):
         messages.error(request, 'Lawyer not found.')
         return redirect('home')
 
+# @csrf_exempt
+# def payment_confirmation(request, order_id):
+#     try:
+#         # Retrieve the appointment based on the order_id
+#         appointment = Appointment.objects.get(order_id=order_id)
+
+#         # Check if the appointment status is 'not_paid'
+#         if appointment.status == 'not_paid':
+#             # Update the appointment status to 'confirmed' since payment is successful
+#             appointment.status = 'confirmed'
+#             appointment.save()
+
+#             # Render the payment confirmation page with appointment details
+#             return render(request, 'payment_confirmation.html', {'appointment': appointment})
+#         else:
+#             # Handle cases where the appointment status is already 'confirmed' or 'cancelled'
+#             return HttpResponse('Payment Failed')
+
+#     except Appointment.DoesNotExist:
+#         # Handle cases where the appointment with the given order_id does not exist
+#         logger.error(f"Appointment with order_id {order_id} does not exist")
+#         return HttpResponse('Appointment DoesNotExist')
+
+# Define the verify_signature function
+def verify_signature(response_data):
+    client = razorpay.Client(auth=("rzp_test_cvGs8NAQTlqQrP", "hNPvcoyR5F1mKYlgG60C2GW6"))
+    return client.utility.verify_payment_signature(response_data)
+
 @csrf_exempt
-def payment_confirmation(request, order_id):
-    try:
-        # Retrieve the appointment based on the order_id
-        appointment = Appointment.objects.get(order_id=order_id)
+def callback(request):
+    if request.method == 'POST':
+        try:
+            # Get the data sent by Razorpay
+            razorpay_payment_id = request.POST.get('razorpay_payment_id', '')
+            razorpay_order_id = request.POST.get('razorpay_order_id', '')
+            razorpay_signature = request.POST.get('razorpay_signature', '')
 
-        # Check if the appointment status is 'not_paid'
-        if appointment.status == 'not_paid':
-            # Update the appointment status to 'confirmed' since payment is successful
-            appointment.status = 'confirmed'
-            appointment.save()
+            # Verify the payment signature using the verify_signature function
+            is_signature_valid = verify_signature({
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_signature': razorpay_signature,
+            })
 
-            # Render the payment confirmation page with appointment details
-            return render(request, 'payment_confirmation.html', {'appointment': appointment})
-        else:
-            # Handle cases where the appointment status is already 'confirmed' or 'cancelled'
-            return HttpResponse('Payment Failed')
+            if is_signature_valid:
+                # Logic to perform if payment is successful
+                # Save the razorpay_payment_id and razorpay_signature to the appointment model
+                try:
+                    appointment = Appointment.objects.get(order_id=razorpay_order_id)
+                    appointment.status = 'confirmed'  # Assuming you have a status field in your model
+                    appointment.razorpay_payment_id = razorpay_payment_id
+                    appointment.razorpay_signature = razorpay_signature
+                    appointment.save()
 
-    except Appointment.DoesNotExist:
-        # Handle cases where the appointment with the given order_id does not exist
-        logger.error(f"Appointment with order_id {order_id} does not exist")
-        return HttpResponse('Appointment DoesNotExist')
+                    return JsonResponse({"status": "success"})
+                except Appointment.DoesNotExist:
+                    return JsonResponse({"error": "Appointment not found"}, status=404)
+            else:
+                # Logic to perform if payment is unsuccessful
+                return JsonResponse({"status": "failure"})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+
+# @csrf_exempt
+# def callback(request):
+    
+#     def verify_signature(response_data):
+#         client = razorpay.Client(auth=("rzp_test_1sFSQT1jdm1swd", "PYkvqUl4Zx2EfNeRAAf9FXJs"))
+#         return client.utility.verify_payment_signature(response_data)
+#     if "razorpay_signature" in request.POST:
+        
+#         razorpay_payment_id = request.POST.get("razorpay_payment_id", "")
+#         order_id = request.POST.get("razorpay_order_id", "")
+#         razorpay_signature = request.POST.get("razorpay_signature", "")
+#         order = Appointment.objects.get(order_id=order_id)
+#         order.razorpay_payment_id = razorpay_payment_id
+#         order.razorpay_signature = razorpay_signature
+#         order.save()
+#     # if request.method == 'POST':
+#     #     try:
+#     #         # Parse the POST data sent by Razorpay
+#     #         data = json.loads(request.body.decode('utf-8'))
+#     #         razorpay_payment_id = data.get('razorpay_payment_id')
+#     #         razorpay_order_id = data.get('razorpay_order_id')
+#     #         razorpay_signature = data.get('razorpay_signature')
+
+#     #         # Verify the payment signature using Razorpay's API
+#     #         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+#     #         payment_verification = client.utility.verify_payment_signature({
+#     #             'razorpay_order_id': razorpay_order_id,
+#     #             'razorpay_payment_id': razorpay_payment_id,
+#     #             'razorpay_signature': razorpay_signature,
+#     #         })
+
+#     #         if payment_verification:
+#     #             # Logic to perform if payment is successful
+#     #             # Save the razorpay_payment_id and razorpay_signature to the appointment model
+#     #             appointment = Appointment.objects.get(order_id=razorpay_order_id)
+#     #             appointment.status = 'confirmed'
+#     #             appointment.razorpay_payment_id = razorpay_payment_id
+#     #             appointment.razorpay_signature = razorpay_signature
+#     #             appointment.save()
+
+#                 return JsonResponse({"status": "success"})
+#             else:
+#                 # Logic to perform if payment is unsuccessful
+#                 return JsonResponse({"status": "failure"})
+
+#         except json.JSONDecodeError as e:
+#             return JsonResponse({"error": str(e)}, status=400)
+#         except Appointment.DoesNotExist:
+#             return JsonResponse({"error": "Appointment not found"}, status=404)
+#         except Exception as e:
+#             return JsonResponse({"error": str(e)}, status=500)
+
+#     else:
+#         return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+
+# @csrf_exempt
+# def callback(request):
+#     def verify_signature(response_data):
+#         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+#         return client.utility.verify_payment_signature(response_data)
+
+#     if request.method == 'POST':
+#         try:
+#             # Check if the request body is empty
+#             if not request.body:
+#                 return JsonResponse({"error": "Empty request body"}, status=400)  # Return a JSON response with an error message
+
+#             data = json.loads(request.body.decode('utf-8'))  # Decode and parse JSON data from the request body
+            
+            
+
+#             if "razorpay_signature" in data:
+#                 razorpay_payment_id = data.get("razorpay_payment_id", "")
+#                 order_id = data.get("razorpay_order_id", "")
+#                 razorpay_signature = data.get("razorpay_signature", "")
+#                 order = Appointment.objects.get(order_id=order_id)
+#                 order.razorpay_payment_id = razorpay_payment_id
+#                 order.razorpay_signature = razorpay_signature
+
+#                 order.save()
+#                 if not verify_signature(data):
+#                     order.status = PaymentStatus.SUCCESS
+#                     order.save()
+#                     return JsonResponse({"status": order.status})
+#                 else:
+#                     order.status = PaymentStatus.FAILURE
+#                     order.save()
+#                     return JsonResponse({"status": order.status})
+#             else:
+#                 razorpay_payment_id = data.get("error[metadata]", {}).get("payment_id")
+#                 order_id = data.get("error[metadata]", {}).get("order_id")
+#                 order = Appointment.objects.get(order_id=order_id)
+#                 order.razorpay_payment_id = razorpay_payment_id
+#                 order.status = PaymentStatus.FAILURE
+#                 order.save()
+#                 return JsonResponse({"status": order.status})
+
+#         except json.JSONDecodeError as e:
+#             return JsonResponse({"error": str(e)}, status=400)
+#         except Appointment.DoesNotExist:
+#             return JsonResponse({"error": "Appointment not found"}, status=404)
+#         except Exception as e:
+#             return JsonResponse({"error": str(e)}, status=500)
+#     else:
+#         return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 def intern(request):
