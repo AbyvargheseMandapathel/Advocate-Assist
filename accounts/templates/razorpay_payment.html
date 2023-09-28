@@ -81,7 +81,7 @@
                             <input type="hidden" id="amount" name="amount" value="{{ order.amount }}">
                             <input type="hidden" id="order-id" name="order_id" value="{{ order_id }}">
                             <div class="mb-3 text-center">
-                                <button class="btn btn-danger mt-3 mr-2" type="button">Cancel this Appointment</button>
+                                <button class="btn btn-danger mt-3 mr-2" type="button" onclick="cancelAppointment()">Cancel this Appointment</button>
                                 <button class="btn btn-success mt-3" type="button" id="rzp-button" onclick="handlePayment()">Confirm & Pay Now</button>\
                                 
                             </div>
@@ -92,12 +92,19 @@
         </div>
     </div>
     <script>
+
+function cancelAppointment() {
+       
+       window.location.href = "{% url 'home' %}";
+   }
+
+
         function handlePayment() {
             var options = {
                 key: "rzp_test_cvGs8NAQTlqQrP",
                 amount: 10000,
                 currency: "INR",
-                name: "{{appointment.client.name}}",
+                name: "{{appointment.client.first_name}}",
                 description: "Test Transaction",
                 image: "https://imgur.com/NOWiBu9",
                 order_id: "{{ appointment.order_id }}",
