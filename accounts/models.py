@@ -353,7 +353,8 @@ class LawyerProfile(models.Model):
 
         conflicting_appointments = self.appointments.filter(
             appointment_date=selected_date,
-            time_slot=selected_time
+            time_slot=selected_time,
+            status = 'confirmed',
         )
 
         return not conflicting_appointments.exists()
