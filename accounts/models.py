@@ -544,6 +544,17 @@ class Case(models.Model):
         return f"Case {self.case_number} ({self.client_name})"
     
     
+class CaseTracking(models.Model):
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name='case_tracking')  # Reference to the original case
+    posted_date = models.DateTimeField(auto_now_add=True)  # Automatically set the current date and time when an entry is created
+    activity = models.CharField(max_length=100)  # Activity related to the case
+    description = models.TextField()  # Description of the activity
+    date = models.DateField()  # Date of the activity
+
+    def __str__(self):
+        return f"Case Tracking - Case {self.case.case_number} ({self.posted_date})"
+    
+    
 from django.db import models
 
 class CurrentCase(models.Model):

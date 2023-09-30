@@ -177,6 +177,9 @@
             <li>
                 <a href="#2a" data-toggle="tab">Incident Details</a>
             </li>
+            <li>
+                <a href="#3a" data-toggle="tab">Track Case</a>
+            </li>
         </ul>
 
         <div class="tab-content clearfix position-relative">
@@ -245,13 +248,26 @@
             <!-- content of 2nd tab end -->
 
             <!-- content of 3rd tab start -->
-            <!-- content of 3rd tab end -->
+    <div class="tab-pane" id="3a">
+        <div class="card">
+            <!-- Display case tracking information here -->
+            <h3>Case Tracking</h3>
+
+            <div class="data-group">
+                {% for tracking in case_tracking_data %}
+                    <p>{{ tracking.date }} - {{ tracking.activity }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- content of 3rd tab end -->
+            
         </div>
         <div style="text-align: center;">
             <p>Go to <a href="{% url 'lawyer_dashboard' %}" class="text-success" style="font-weight: 600;">Dashboard</a></p>
         </div>
     </div>
-
+    <a href="{% url 'add_case_update' case_number=case.case_number %}" class="btn btn-primary">Add Case Update</a>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 </body>

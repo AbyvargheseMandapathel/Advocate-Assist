@@ -17,7 +17,7 @@ from django.utils.http import urlsafe_base64_decode
 from .forms import CustomPasswordResetForm  
 from django.core.exceptions import ValidationError
 from datetime import datetime
-from .models import LawyerProfile , ContactEntry , Internship , Student , Application , Booking , Day ,TimeSlot , LawyerDayOff , HolidayRequest , Case ,Appointment
+from .models import LawyerProfile , ContactEntry , Internship , Student , Application , Booking , Day ,TimeSlot , LawyerDayOff , HolidayRequest , Case ,Appointment , CaseTracking
 from .forms import ContactForm , BookingForm , InternshipForm , BookingStatusForm ,CustomUserUpdateForm, LawyerProfileUpdateForm
 import markdown
 from django.contrib import messages
@@ -1488,8 +1488,11 @@ def case_detail(request, case_id):
     # Retrieve the case object by its ID or return a 404 error if not found
     case = get_object_or_404(Case, pk=case_id)
 
-    # Render the 'case_detail.html' template with the case object
-    return render(request, 'lawyer/case_detail.html', {'case': case})
+    # Retrieve the case tracking data associated with this case
+    case_tracking_data = CaseTracking.objects.filter(case=case)
+
+    # Render the 'case_detail.html' template with the case and case tracking data
+    return render(request, 'lawyer/case_detail.html', {'case': case, 'case_tracking_data': case_tracking_data})
 
 # def case_saved(request):
 #     return render(request, 'case_saved.html')
@@ -2422,3 +2425,30 @@ def student_detail(request, student_id):
         'student': student,
     }
     return render(request, 'student_detail.html', context)
+
+
+def add_case_update(request, case_number):
+    # Retrieve the corresponding Case object based on the case_number
+    case = get_object_or_404(Case, case_number=case_number)
+
+    if request.method == 'POST':
+        # Extract form data from request.POST
+        activity = request.POST.get('activity')
+        description = request.POST.get('description')
+        date = request.POST.get('date')
+        
+        # Create a new CaseUpdate object associated with the Case
+        case_update = CaseTracking.objects.create(
+            case=case,
+            activity=activity,
+            description=description,
+            date=date
+        )
+        
+        # Save the case update
+        case_update.save()
+        
+        # Redirect to the case detail page
+        return redirect('list_cases')
+    
+    return render(request, 'add_case_update_form.html', {'case': case})

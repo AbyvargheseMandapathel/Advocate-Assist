@@ -47,6 +47,10 @@ urlpatterns = [
     path('generate-pdf/<int:appointment_id>/', views.generate_appointment_pdf, name='generate_appointment_pdf'),
     path('student/<int:student_id>/', views.student_detail, name='student_detail'),
     path("callback/", views.callback, name="callback"),
+    path('case_detail/<int:case_number>/', views.case_detail, name='case_detail'),
+    path('cases/<int:case_number>/add-update/', views.add_case_update, name='add_case_update'),
+
+
     
 ]
 
