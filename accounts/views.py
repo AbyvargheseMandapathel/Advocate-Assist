@@ -2457,3 +2457,18 @@ def add_case_update(request, case_number):
 def unassigned_students(request):
     unassigned_students = Student.objects.filter(is_approved=True, lawyer__isnull=True)
     return render(request, 'unassigned_students.html', {'unassigned_students': unassigned_students})
+
+def hire_student(request, student_id):
+    if request.method == 'POST':
+        student = Student.objects.get(id=student_id)
+
+        # Check if the student is already hired
+        if student.lawyer:
+            messages.error(request, 'This student is already hired.')
+        else:
+            # Assign the lawyer to the student
+            student.lawyer = request.user.lawyer_profile
+            student.save()
+            messages.success(request, f'You have hired {student.user.first_name} {student.user.last_name}.')
+
+    return redirect('unassigned_students')
