@@ -17,7 +17,7 @@ from django.utils.http import urlsafe_base64_decode
 from .forms import CustomPasswordResetForm  
 from django.core.exceptions import ValidationError
 from datetime import datetime
-from .models import LawyerProfile , ContactEntry , Internship , Student , Application , Booking , Day ,TimeSlot , LawyerDayOff , HolidayRequest , Case ,Appointment , CaseTracking
+from .models import LawyerProfile , ContactEntry , Internship , Student , Application , Booking , Day ,TimeSlot , LawyerDayOff , HolidayRequest , Case ,Appointment , CaseTracking , WorkAssignment
 from .forms import ContactForm , BookingForm , InternshipForm , BookingStatusForm ,CustomUserUpdateForm, LawyerProfileUpdateForm
 import markdown
 from django.contrib import messages
@@ -2472,3 +2472,44 @@ def hire_student(request, student_id):
             messages.success(request, f'You have hired {student.user.first_name} {student.user.last_name}.')
 
     return redirect('unassigned_students')
+
+def assign_work(request):
+    # Get the currently logged-in lawyer
+    current_lawyer = request.user.lawyer_profile
+
+    # Query students who are hired by the current lawyer
+    hired_students = Student.objects.filter(lawyer=current_lawyer, is_approved=True)
+
+    # Query cases associated with the current lawyer
+    lawyer_cases = Case.objects.filter(lawyer=current_lawyer)
+
+    if request.method == 'POST':
+        description = request.POST.get('description')
+        deadline_date = request.POST.get('deadline_date')
+        student_id = request.POST.get('student_id')
+        case_id = request.POST.get('case_id')  # Get the selected case (optional)
+
+        try:
+            # Check if the student_id exists and is eligible for work assignment
+            student = Student.objects.get(id=student_id, is_approved=True, lawyer=current_lawyer)
+        except Student.DoesNotExist:
+            return render(request, 'assign_work.html', {'error_message': 'Invalid student selection'})
+
+        # Create a new WorkAssignment object and assign it to the current lawyer
+        work_assignment = WorkAssignment(
+            description=description,
+            deadline_date=deadline_date,
+            student=student,
+            case_id=case_id  # Assign the selected case (optional)
+        )
+        work_assignment.save()
+        
+        # Redirect to a success page or another appropriate view
+        return HttpResponse('work_assigned_success')
+
+    context = {
+        'hired_students': hired_students,
+        'lawyer_cases': lawyer_cases,
+    }
+
+    return render(request, 'assign_work.html', context)

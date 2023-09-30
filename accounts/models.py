@@ -556,7 +556,16 @@ class CaseTracking(models.Model):
         return f"Case Tracking - Case {self.case.case_number} ({self.posted_date})"
     
     
-from django.db import models
+class WorkAssignment(models.Model):
+    description = models.TextField()
+    deadline_date = models.DateField()
+    case = models.ForeignKey('Case', on_delete=models.CASCADE)
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Work Assignment for Case {self.case.case_number}"
+    
+
 
 class CurrentCase(models.Model):
     lawyer = models.ForeignKey(LawyerProfile, on_delete=models.CASCADE, related_name='current_cases')

@@ -51,6 +51,7 @@ urlpatterns = [
     path('cases/<int:case_number>/add-update/', views.add_case_update, name='add_case_update'),
     path('unassigned_students/', views.unassigned_students, name='unassigned_students'),
     path('hire_student/<int:student_id>/', views.hire_student, name='hire_student'),
+    path('assign_work/', views.assign_work, name='assign_work'),
 
 
     
