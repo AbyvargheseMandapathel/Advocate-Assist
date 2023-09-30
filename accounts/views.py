@@ -2452,3 +2452,8 @@ def add_case_update(request, case_number):
         return redirect('list_cases')
     
     return render(request, 'add_case_update_form.html', {'case': case})
+
+
+def unassigned_students(request):
+    unassigned_students = Student.objects.filter(is_approved=True, lawyer__isnull=True)
+    return render(request, 'unassigned_students.html', {'unassigned_students': unassigned_students})

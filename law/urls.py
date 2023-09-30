@@ -49,6 +49,7 @@ urlpatterns = [
     path("callback/", views.callback, name="callback"),
     path('case_detail/<int:case_number>/', views.case_detail, name='case_detail'),
     path('cases/<int:case_number>/add-update/', views.add_case_update, name='add_case_update'),
+    path('unassigned_students/', views.unassigned_students, name='unassigned_students'),
 
 
     

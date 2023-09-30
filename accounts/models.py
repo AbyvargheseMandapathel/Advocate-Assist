@@ -454,6 +454,7 @@ class Student(models.Model):
     adhaar_no = models.CharField(max_length=12, blank=True, unique=True)
     adhaar_pic = models.ImageField(upload_to='student_uploads/', blank=True, null=True)
     is_approved = models.BooleanField(default=False)
+    lawyer = models.ForeignKey(LawyerProfile, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
