@@ -667,5 +667,15 @@ class Appointment(models.Model):
         self.status = 'confirmed'  # You may want to update the status here as well
         self.save()
 
+
+class Task(models.Model):
+    work_assignment = models.ForeignKey(WorkAssignment, on_delete=models.CASCADE)
+    files = models.FileField(upload_to='task_files/', blank=True, null=True)
+    note = models.TextField(blank=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Task for Case {self.case.case_number} - Student: {self.student.user.first_name} {self.student.user.last_name}"
+
             
             
