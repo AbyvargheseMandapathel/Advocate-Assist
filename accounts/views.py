@@ -2473,6 +2473,11 @@ def hire_student(request, student_id):
 
     return redirect('unassigned_students')
 
+
+def assign_work(request):
+    return render(request, 'assign_work.html')
+
+"""   
 def assign_work(request):
     # Get the currently logged-in lawyer
     current_lawyer = request.user.lawyer_profile
@@ -2513,3 +2518,4 @@ def assign_work(request):
     }
 
     return render(request, 'assign_work.html', context)
+"""

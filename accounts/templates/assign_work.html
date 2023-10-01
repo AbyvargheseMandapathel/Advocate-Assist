@@ -1,48 +1,83 @@
-<h1>Assign Work to a Student</h1>
+{% load static %}
 
-<form method="post" action="{% url 'assign_work' %}">
-  {% csrf_token %}
-  
-  <!-- Description Field -->
-  <div class="form-group">
-    <label for="description">Description:</label>
-    <textarea id="description" name="description" class="form-control" rows="4" required></textarea>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/navigation.css' %}">
+  <link rel="stylesheet" href="{% static 'css/add_user.css' %}">
+  <title>Assign Work</title>
+
+  <style>
+    a.btn-outline-warning {
+      border-radius: 1em;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container p-5">
+    <h1 class="text-center mb-4">Assign Work To Student</h1>
+    <div class="row">
+      <div class="col-12 add-user-col d-flex justify-content-center">
+
+        <form method="post" class="add-user-form" action="{% url 'lawyer_save' %}" enctype="multipart/form-data"
+          onsubmit="return confirmSubmit();">
+          {% csrf_token %}
+
+
+          <div class="input-group">
+            <label for="address">Description</label>
+            <textarea name="desc" cols="30" rows="10" required></textarea>
+          </div>
+
+          <div class="input-group">
+            <label for="dob">Deadline Date</label>
+            <input type="date" name="deadline" required />
+          </div>
+
+          <div class="input-group">
+            <label for="specialization">Select Student</label>
+            <select name="student" required>
+              <option value="1" selected disabled>Choose Student</option>
+              <option value="1">Student 1</option>
+              <option value="1">Student 2</option>
+              <option value="1">Student 3</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="specialization">Select Case (Optional)</label>
+            <select name="case">
+              <option value="1" selected disabled>Choose Case</option>
+              <option value="1">Case 1</option>
+              <option value="1">Case 2</option>
+              <option value="1">Case 3</option>
+            </select>
+          </div>
+
+          <p class="text-danger m-0">Error Message</p>
+          <p class="text-danger m-0">Error Message</p>
+
+          <div class="input-group">
+            <button class="btn btn-warning" type="submit">Assign Work</button>
+          </div>
+
+          <p class="text-center my-4"><a href="/" class="btn btn-sm btn-outline-warning px-4">Go To Dashboard</a></p>
+        </form>
+
+      </div>
+    </div>
   </div>
 
-  <!-- Deadline Date Field -->
-  <div class="form-group">
-    <label for="deadline_date">Deadline Date:</label>
-    <input type="date" id="deadline_date" name="deadline_date" class="form-control" required>
-  </div>
+</body>
 
-  <!-- Student Selection -->
-  <div class="form-group">
-    <label for="student_id">Select a Student:</label>
-    <select id="student_id" name="student_id" class="form-control" required>
-      <option value="" disabled selected>Select a student</option>
-      {% for student in hired_students %}
-        <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-
-  <!-- Case Selection -->
-  <div class="form-group">
-    <label for="case_id">Select a Case (Optional):</label>
-    <select id="case_id" name="case_id" class="form-control">
-      <option value="" disabled selected>Select a case (optional)</option>
-      {% for case in lawyer_cases %}
-        <option value="{{ case.id }}">CS/{{ case.case_number }}</option>
-      {% endfor %}
-    </select>
-  </div>
-
-  <!-- Submit Button -->
-  <button type="submit" class="btn btn-primary">Assign Work</button>
-</form>
-
-{% if error_message %}
-  <p class="text-danger">{{ error_message }}</p>
-{% endif %}
-
-<a href="{% url 'login' %}" class="btn btn-secondary">Back to Dashboard</a>
+</html>
