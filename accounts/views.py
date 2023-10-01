@@ -2340,10 +2340,11 @@ def list_student_requests(request):
     student_requests = Student.objects.filter(is_approved=False)
     
     # Determine which students are eligible for approval
-    eligible_students = [student for student in student_requests if student.cgpa >= 7.5]
+    eligible_students = [student for student in student_requests if student.cgpa is not None and student.cgpa >= 7.5]
     
     # Determine which students need to be rejected
-    rejected_students = [student for student in student_requests if student.cgpa < 7.5]
+    rejected_students = [student for student in student_requests if student.cgpa is not None and student.cgpa < 7.5]
+
     
     context = {
         'eligible_students': eligible_students,

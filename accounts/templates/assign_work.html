@@ -29,49 +29,49 @@
     <div class="row">
       <div class="col-12 add-user-col d-flex justify-content-center">
 
-        <form method="post" class="add-user-form" action="{% url 'lawyer_save' %}" enctype="multipart/form-data"
-          onsubmit="return confirmSubmit();">
+        <form method="post" class="add-user-form" action="{% url 'assign_work' %}">
           {% csrf_token %}
-
-
           <div class="input-group">
-            <label for="address">Description</label>
-            <textarea name="desc" cols="30" rows="10" required></textarea>
+            <label for="description">Description</label>
+            <textarea name="description" cols="30" rows="10" required></textarea>
           </div>
 
           <div class="input-group">
-            <label for="dob">Deadline Date</label>
-            <input type="date" name="deadline" required />
+            <label for="deadline_date">Deadline Date</label>
+            <input type="date" name="deadline_date" required />
           </div>
 
           <div class="input-group">
-            <label for="specialization">Select Student</label>
-            <select name="student" required>
+            <label for="student_id">Select Student</label>
+            <select name="student_id" required>
               <option value="1" selected disabled>Choose Student</option>
-              <option value="1">Student 1</option>
-              <option value="1">Student 2</option>
-              <option value="1">Student 3</option>
+              {% for student in hired_students %}
+        <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+      {% endfor %}
             </select>
           </div>
 
           <div class="input-group">
-            <label for="specialization">Select Case (Optional)</label>
-            <select name="case">
+            <label for="specialization">Select Case</label>
+            <select id="case_id" name="case_id" >
               <option value="1" selected disabled>Choose Case</option>
-              <option value="1">Case 1</option>
-              <option value="1">Case 2</option>
-              <option value="1">Case 3</option>
+              {% for case in lawyer_cases %}
+        <option value="{{ case.id }}">CS/{{ case.case_number }}</option>
+      {% endfor %}
             </select>
           </div>
-
-          <p class="text-danger m-0">Error Message</p>
-          <p class="text-danger m-0">Error Message</p>
+          {% if messages %}
+    {% for message in messages %}
+    <p class="text-danger m-0">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+          
 
           <div class="input-group">
-            <button class="btn btn-warning" type="submit">Assign Work</button>
+            <button class="btn btn-warning" type="submit" >Assign Work</button>
           </div>
 
-          <p class="text-center my-4"><a href="/" class="btn btn-sm btn-outline-warning px-4">Go To Dashboard</a></p>
+          <p class="text-center my-4"><a href="{% url 'login' %}" class="btn btn-sm btn-outline-warning px-4">Go To Dashboard</a></p>
         </form>
 
       </div>

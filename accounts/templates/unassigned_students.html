@@ -33,72 +33,23 @@
     <div class="conatainer p-5" style="overflow-x: hidden;">
         <h1 class="text-center mb-5">Unassigned Students</h1>
         <div class="row">
-
+            {% for student in unassigned_students %}
+            
             <div class="col-md-3">
                 <div class="student-card p-3">
-                    <h5>Aby Varghese</h5>
-                    <p>abyvarghese@example.com</p>
+                    <h5>{{ student.user.first_name }} {{ student.user.last_name }}</h5>
+                    <p>{{ student.user.email }}</p>
                     <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, modi!</p>
-                    <form method="post" action="{% url 'home' %}">
+                    <form method="post" action="{% url 'hire_student' student.id %}">
                         <!-- url 'hire_student' student.id -->
                         {% csrf_token %}
                         <button type="submit" class="btn btn-md btn-warning mx-auto">Hire Student</button>
                     </form>
                 </div>
             </div>
-
-            <div class="col-md-3">
-                <div class="student-card p-3">
-                    <h5>Aby Varghese</h5>
-                    <p>abyvarghese@example.com</p>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, modi!</p>
-                    <form method="post" action="{% url 'home' %}">
-                        <!-- url 'hire_student' student.id -->
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-md btn-warning mx-auto">Hire Student</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="student-card p-3">
-                    <h5>Aby Varghese</h5>
-                    <p>abyvarghese@example.com</p>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, modi!</p>
-                    <form method="post" action="{% url 'home' %}">
-                        <!-- url 'hire_student' student.id -->
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-md btn-warning mx-auto">Hire Student</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="student-card p-3">
-                    <h5>Aby Varghese</h5>
-                    <p>abyvarghese@example.com</p>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, modi!</p>
-                    <form method="post" action="{% url 'home' %}">
-                        <!-- url 'hire_student' student.id -->
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-md btn-warning mx-auto">Hire Student</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="student-card p-3">
-                    <h5>Aby Varghese</h5>
-                    <p>abyvarghese@example.com</p>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, modi!</p>
-                    <form method="post" action="{% url 'home' %}">
-                        <!-- url 'hire_student' student.id -->
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-md btn-warning mx-auto">Hire Student</button>
-                    </form>
-                </div>
-            </div>
-
+            {% empty %}
+            <li>No unassigned students found.</li>
+        {% endfor %}
         </div>
     </div>
 
