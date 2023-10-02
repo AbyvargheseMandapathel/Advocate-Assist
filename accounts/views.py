@@ -2508,7 +2508,7 @@ def assign_work(request):
         work_assignment.save()
         
         # Redirect to a success page or another appropriate view
-        return HttpResponse('work_assigned_success')
+        return render(request, 'work_assigned.html')
 
     context = {
         'hired_students': hired_students,
@@ -2523,44 +2523,10 @@ def student_work_assignments(request):
     if request.user.user_type != 'student':
         # Redirect to an appropriate page or display an error message
         # because only students are allowed to access this view.
-        return HttpResponse("Access denied. Only students can access this page.")
+        return render(request, '404.html')
 
     # Retrieve work assignments for the current student
     student = request.user.student_profile
     work_assignments = WorkAssignment.objects.filter(student=student)
 
     return render(request, 'student_work_assignments.html', {'work_assignments': work_assignments})
-
-
-def upload_report(request, work_assignment_id):
-    print("Work Assignment ID:", work_assignment_id)
-    try:
-        work_assignment = WorkAssignment.objects.get(pk=work_assignment_id)
-    except WorkAssignment.DoesNotExist:
-        raise Http404("WorkAssignment not found")
-
-    if request.user.is_authenticated and hasattr(request.user, 'student_profile'):
-        student = request.user.student_profile
-
-        # Check if the student is assigned to this work_assignment
-        if work_assignment.student != student:
-            raise PermissionDenied("You are not assigned to this work assignment")
-
-        if request.method == "POST":
-            # Create a new task with the uploaded report, student, and work_assignment
-            task = Task(work_assignment=work_assignment, student=student)
-            uploaded_file = request.FILES.get("report_file")
-            if uploaded_file:
-                task.files = uploaded_file
-            task.note = request.POST.get("report_note")
-            task.save()
-
-            return redirect("task_detail", task_id=task.pk)
-    else:
-        raise PermissionDenied("Only students assigned to this work assignment can upload reports")
-
-    return render(
-        request,
-        "upload_report.html",
-        {"work_assignment": work_assignment}
-    )

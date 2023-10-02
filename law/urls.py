@@ -53,7 +53,7 @@ urlpatterns = [
     path('hire_student/<int:student_id>/', views.hire_student, name='hire_student'),
     path('assign_work/', views.assign_work, name='assign_work'),
     path('work-assignments/', views.student_work_assignments, name='student_work_assignments'),
-    path('upload_report/<int:work_assignment_id>/', views.upload_report, name='upload_report'),
+    
     
 ]
 
