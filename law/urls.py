@@ -52,6 +52,7 @@ urlpatterns = [
     path('unassigned_students/', views.unassigned_students, name='unassigned_students'),
     path('hire_student/<int:student_id>/', views.hire_student, name='hire_student'),
     path('assign_work/', views.assign_work, name='assign_work'),
+    path('work-assignments', views.work_assignments, name='work_assignments'),
 
 
     

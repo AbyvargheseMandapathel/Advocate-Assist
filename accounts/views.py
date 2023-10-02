@@ -2519,3 +2519,6 @@ def assign_work(request):
 
     return render(request, 'assign_work.html', context)
 """
+
+def work_assignments(request):
+    return render(request, 'work_assignments.html')
