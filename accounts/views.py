@@ -2196,7 +2196,7 @@ def intern(request):
             messages.error(request, 'Email already exists.')
             return render(request, 'student/intern.html')
         # Check if the email is already in use
-        if CustomUser.objects.filter(adhaar_no=adhaar_no).exists():
+        if Student.objects.filter(adhaar_no=adhaar_no).exists():
             messages.error(request, 'Adhar Number already exists.')
             return render(request, 'student/intern.html')
         
@@ -2263,8 +2263,10 @@ def intern(request):
 
         # Redirect to a success page or do something else
         # Redirect to a success page or do something else
-        return HttpResponse('Application submitted successfully.')  # Replace 'success_page' with your actual success page URL
+        # return HttpResponse('Application submitted successfully.')  # Replace 'success_page' with your actual success page URL
+        return render(request,'application_successful.html')  # Replace 'success_page' with your actual success page URL
 
+        
     return render(request, 'student/intern.html')  # Replace 'intern_form.html' with your actual template name
 
 
@@ -2393,6 +2395,7 @@ def generate_appointment_pdf(request, appointment_id):
         'lawyer_name': f"{appointment.lawyer.user.first_name} {appointment.lawyer.user.last_name}",
         'appointment_date': appointment.appointment_date,
         'appointment_id': appointment.id,
+        'appointment_payment_id': appointment.payment_id,
         'appointment_order_id': appointment.order_id,
         'appointment_time': appointment.time_slot,
         'amount': '1 INR',  # You can fetch this dynamically if needed

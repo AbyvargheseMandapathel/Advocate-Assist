@@ -1,35 +1,78 @@
 {% load static %}
-<!-- your_template.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
     <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'css/nice-select.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/gijgo.css' %}">
+    <link rel="stylesheet" href="{% static 'css/slicknav.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/navigation.css' %}">
+    <!-- CSS here -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/add_user.css' %}">
 
     <style>
-        .student-card {
+        * {
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        .wrapper {
             width: 100%;
-            background: #f6f3f3a7;
-            max-height: 20em;
-            word-wrap: break-word;
-            transition: 300ms;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
 
-        .student-card:hover {
-            box-shadow: 0 2px 7px #79777765;
+        .img-container {
+            width: 25em;
+            height: 25em;
         }
 
-        .row {
-            row-gap: 1em;
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .go-to-home,
+        .go-to-home:hover {
+            color: #fff;
+            text-decoration: none;
+            background-color: #f2c64d;
+            padding: 1em 1.5em;
+            border-radius: 2em;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        @media screen and (max-width: 771px) {
+            .img-container {
+                width: 15em;
+                height: 15em;
+            }
         }
     </style>
+
 </head>
 
 <body>
-
     <header>
         <div class="header-area ">
             <div id="sticky-header" class="main-header-area">
@@ -38,7 +81,7 @@
                         <div class="col-xl-2 col-lg-2">
                             <div class="logo-img">
                                 <a href="index.html">
-                                    <img src="{% static 'img\icon.ico' %}" alt="" width="120">
+                                    <img src="{% static 'img\icon.ico' %}" alt=""width="120">
                                 </a>
                             </div>
                         </div>
@@ -65,16 +108,16 @@
                                             <a href="#">Welcome {{ user.first_name }}<i class="ti-angle-down"></i></a>
                                             <ul class="submenu">
                                                 {% if user.user_type == 'admin' %}
-
+                                                
                                                 {% endif %}
                                                 {% if user.user_type == 'lawyer' %}
-                                                <!-- <li><a href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>                                        -->
-                                                {% endif %}
+                                                         <!-- <li><a href="{% url 'lawyer_dashboard' %}">Dashboard</a></li>                                        -->
+                                                                  {% endif %}
                                                 <li><a href="{% url 'logout' %}">Logout</a></li>
                                             </ul>
                                         </li>
                                         {% else %}
-
+                                        
                                         <li><a href="{% url 'signup' %}">Signup</a></li>
                                         <li><a href="{% url 'login' %}">Login</a></li>
                                         {% endif %}
@@ -88,35 +131,16 @@
         </div>
     </header>
 
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'login' %}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="#">Unassigned Students</a></li>
-        </ol>
-    </nav>
-
-    <div class="conatainer p-5" style="overflow-x: hidden;">
-        <h1 class="text-center mb-5">Unassigned Students</h1>
-        <div class="row">
-            {% for student in unassigned_students %}
-            
-            <div class="col-md-3">
-                <div class="student-card p-3">
-                    <h5>{{ student.user.first_name }} {{ student.user.last_name }}</h5>
-                    <p>{{ student.user.email }}</p>
-                    <p>{{ student.user.phone }}</p>
-                    <form method="post" action="{% url 'hire_student' student.id %}">
-                        <!-- url 'hire_student' student.id -->
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-md btn-warning mx-auto">Hire Student</button>
-                    </form>
-                </div>
-            </div>
-            {% empty %}
-            <li>No unassigned students found.</li>
-        {% endfor %}
+    <div class="wrapper">
+        <div class="img-container">
+            <img src="{% static 'img/tick.png' %}" alt="404" />
         </div>
+        <p>
+           Application Submitted Successfully
+            
+        </p>
+
+        <a href="{% url 'home' %}" class="go-to-home">Go To Homepage</a>
     </div>
 
 </body>
