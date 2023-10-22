@@ -345,17 +345,36 @@ class LawyerProfile(models.Model):
 
     #     return experience
     
+    # def is_available(self, selected_date, selected_slot):
+    #     try:
+    #         selected_time = datetime.strptime(selected_slot, '%I:%M %p').time()
+    #     except ValueError:
+    #         return False
+
+    #     conflicting_appointments = self.appointments.filter(
+    #         appointment_date=selected_date,
+    #         time_slot=selected_time,
+    #         status = 'confirmed',
+    #     )
+
+    #     return not conflicting_appointments.exists()
+    
+    
     def is_available(self, selected_date, selected_slot):
         try:
             selected_time = datetime.strptime(selected_slot, '%I:%M %p').time()
         except ValueError:
             return False
 
+        # Filter based on the 'status' field in the Payment class
         conflicting_appointments = self.appointments.filter(
             appointment_date=selected_date,
             time_slot=selected_time,
-            status = 'confirmed',
+            payment__status='confirmed',  # Use 'payment__status' to access the 'status' field in Payment
         )
+
+        # Now 'conflicting_appointments' will contain only those with 'confirmed' status
+        # Add additional checks or logic as needed
 
         return not conflicting_appointments.exists()
 
@@ -629,22 +648,10 @@ class CurrentCase(models.Model):
 #                 raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
 
 class Appointment(models.Model):
-    STATUS_CHOICES = (
-        ('not_paid', 'Not Paid'),
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled'),
-    )
-    
     lawyer = models.ForeignKey('LawyerProfile', on_delete=models.CASCADE)
     client = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     appointment_date = models.DateField()
     time_slot = models.CharField(max_length=20)  # Use TimeSlot model here
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PaymentStatus.PENDING)
-    order_id = models.CharField(max_length=100, blank=True, null=True)  # Add this field for Razorpay order ID
-    razorpay_payment_id = models.CharField(max_length=255, blank=True, null=True)
-    razorpay_signature = models.CharField(max_length=255, blank=True,null=True)
-    
-    # Add any other fields or methods related to appointments
 
     def __str__(self):
         return f'Appointment with {self.lawyer} on {self.appointment_date} at {self.time_slot}'
@@ -654,18 +661,34 @@ class Appointment(models.Model):
         most_recent_working_hours_date = self.lawyer.working_slots.aggregate(models.Max('created_date'))['created_date__max']
         
         if most_recent_working_hours_date:
-            seven_days_ago = most_recent_working_hours_date + timedelta(days=14)
+            seven_days_ago = most_recent_working_hours_date + timedelta(days=7)  # Changed from 14 to 7
             
             if self.appointment_date < seven_days_ago.date():
                 raise ValidationError("You can only schedule appointments within 7 days of your most recent working hours assignment.")
-            
+
+class Payment(models.Model):
+    STATUS_CHOICES = (
+        (PaymentStatus.SUCCESS, 'Confirmed'),
+        (PaymentStatus.FAILURE, 'Cancelled'),
+        (PaymentStatus.PENDING, 'Not Paid'),
+    )
+
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PaymentStatus.PENDING)
+    order_id = models.CharField(max_length=100, blank=True, null=True)  # Add this field for Razorpay order ID
+    razorpay_payment_id = models.CharField(max_length=255, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.order_id}'
+
     def save_payment_data(self, payment_id, signature_id):
         """
         Save the Razorpay payment ID and signature ID for this appointment.
         """
         self.razorpay_payment_id = payment_id
         self.razorpay_signature = signature_id
-        self.status = 'confirmed'  # You may want to update the status here as well
+        self.status = PaymentStatus.SUCCESS  # Use PaymentStatus to update the status
         self.save()
 
 
