@@ -1,0 +1,9 @@
+<!-- login/otp_verification.html -->
+
+<h2>OTP Verification</h2>
+<form method="post" action="">
+  {% csrf_token %}
+  <label for="entered_otp">Enter the OTP sent to your phone:</label>
+  <input type="text" name="entered_otp" required>
+  <button type="submit">Verify OTP</button>
+</form>

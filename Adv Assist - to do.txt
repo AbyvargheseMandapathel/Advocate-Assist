@@ -1,0 +1,29 @@
+Adv Assist
+
+- design form
+- lawyer autofill from excel
+- validation html
+- login OTP
+- 30 days ( not clear) - every month 
+- law (not clear)
+- lawyer limit student 5
+- Appointen page ( not clear)
+
+student
+report 
+type case
+
+case assign 
+
+- report
+- casula leave 3 days ( take half leave also)
+- duty leave report (half) - 1 day before
+leave reason 
+
+leave report
+leave summary                                                            
+ 
+
+ update profile _ additional qualification
+ name , qualification , mail id - non editable
+ phone no change OTP

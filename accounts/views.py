@@ -58,12 +58,28 @@ import json
 from .constants import PaymentStatus
 from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied
+from twilio.rest import Client
+import random
 
 
 
 logger = logging.getLogger(__name__)
 
+# # Replace these with your Twilio credentials
+# TWILIO_ACCOUNT_SID = 'AC30860f145a25bb1043dafe33140671ac'
+# TWILIO_AUTH_TOKEN = 'e8b78caf7b9f27f25c5fae1791abf5b7'
+# TWILIO_PHONE_NUMBER = '+447360273978'
 
+# def send_otp_via_twilio(phone_number, otp):
+#     # Twilio client setup
+#     client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+
+#     # Replace 'your_twilio_phone_number' with the Twilio phone number you've purchased
+#     message = client.messages.create(
+#         body=f'Your OTP is: {otp}',
+#         from_=TWILIO_PHONE_NUMBER,
+#         to=phone_number
+#     )
 
 
 def login_view(request):
@@ -86,7 +102,7 @@ def login_view(request):
     if request.method == 'POST':
         email = request.POST['email']  # Change this to 'email'
         password = request.POST['password']
-        user = authenticate(request, username=email, password=password)  # Use email for authentication
+        user = authenticate(request, username=email, password=password)
         if user is not None:
             login(request, user)
             if user.user_type == 'admin':
@@ -106,6 +122,118 @@ def login_view(request):
             messages.error(request, 'Invalid email or password. Please try again')
     
     return render(request, 'login.html')
+
+def generate_otp():
+    return str(random.randint(1000, 9999))
+
+def send_otp(phone_number, otp):
+    phone_number_with_country_code = '+91' + phone_number
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+    try:
+        message = client.messages.create(
+            to=phone_number_with_country_code,
+            from_=settings.TWILIO_PHONE_NUMBER,
+            body=f'Your OTP is: {otp}'
+        )
+        print(message.sid) 
+    except Exception as e:
+        print(f"Error sending OTP: {e}")
+
+def login_otp(request):
+    if request.method == 'POST':
+        phone_number = request.POST.get('phone_number')
+
+        if not phone_number:
+            messages.error(request, 'Phone number is required.')
+            return render(request, 'login/login_via_otp.html')
+
+        phone_number = phone_number.replace(" ", "")
+        if len(phone_number) != 10 or not phone_number.isdigit():
+            messages.error(request, 'Invalid phone number.')
+            return render(request, 'login/login_via_otp.html')
+
+        # Generate and send OTP
+        otp = generate_otp()
+        send_otp(phone_number, otp)
+
+        # Save OTP and phone number in session for verification
+        request.session['login_otp'] = otp
+        request.session['login_phone'] = phone_number
+
+        return redirect('otp_verification')  # Redirect to the OTP verification page
+
+    return render(request, 'login/login_via_otp.html')
+
+def otp_verification(request):
+    if request.method == 'POST':
+        entered_otp = request.POST.get('entered_otp')
+        stored_otp = request.session.get('login_otp')
+        phone_number = request.session.get('login_phone')
+        
+        print(f"Entered OTP: {entered_otp}")
+        print(f"Stored OTP: {stored_otp}")
+        print(f"Phone Number: {phone_number}")
+
+        if entered_otp == stored_otp:
+            print("Entered authentication")
+            User = get_user_model()
+            user = authenticate(request, phone=phone_number)  # No need to provide a password
+
+            if user:
+                login(request, user)
+                print("User authenticated and logged in:", user)
+                
+                if user.user_type == 'admin':
+                    return redirect(reverse('admin_dashboard'))
+                elif user.user_type == 'client':
+                    return redirect(reverse('client_dashboard'))
+                elif user.user_type == 'lawyer':
+                    # Assuming you have a one-to-one relationship between CustomUser and LawyerProfile
+                    lawyer_profile = LawyerProfile.objects.get(user=user)
+                    if lawyer_profile.time_update is None or (timezone.now() - lawyer_profile.time_update).days > 14:
+                        return redirect(reverse('assign_working_hours'))
+                    else:
+                        return redirect(reverse('lawyer_dashboard'))
+                elif user.user_type == 'student':
+                    return redirect(reverse('student_dashboard'))
+            else:
+                messages.error(request, 'Invalid OTP. Please try again')
+
+    return render(request, 'login/otp_verification.html')
+
+# def otp_verification(request):
+#     if request.method == 'POST':
+#         entered_otp = request.POST.get('otp', '')
+#         stored_otp = request.session.get('otp', '')
+#         user_id = request.session.get('user_id', '')
+
+#         if entered_otp == stored_otp and user_id:
+#             # Clear session data
+#             del request.session['otp']
+#             del request.session['user_id']
+
+#             # Log in the user
+#             user = CustomUser.objects.get(pk=user_id)
+#             login(request, user)
+
+#             if user.user_type == 'admin':
+#                 return redirect(reverse('admin_dashboard'))
+#             elif user.user_type == 'client':
+#                 return redirect(reverse('client_dashboard'))
+#             elif user.user_type == 'lawyer':
+#                 # Assuming you have a one-to-one relationship between CustomUser and LawyerProfile
+#                 lawyer_profile = LawyerProfile.objects.get(user=user)
+#                 if lawyer_profile.time_update is None or (timezone.now() - lawyer_profile.time_update).days > 14:
+#                     return redirect(reverse('assign_working_hours'))
+#                 else:
+#                     return redirect(reverse('lawyer_dashboard'))
+#             elif user.user_type == 'student':
+#                 return redirect(reverse('student_dashboard'))
+#         else:
+#             messages.error(request, 'Invalid OTP. Please try again.')
+
+#     return render(request, 'otp_verification.html')
     
 
 def signup_view(request):

@@ -1,0 +1,10 @@
+<!-- login_via_otp.html -->
+
+  <h2>Login via OTP</h2>
+  <form method="post" action="{% url 'login_via_otp' %}">
+    {% csrf_token %}
+    <label for="phone_number">Enter your phone number:</label>
+    <input type="tel" name="phone_number"  required>
+    <button type="submit">Send OTP</button>
+  </form>
+

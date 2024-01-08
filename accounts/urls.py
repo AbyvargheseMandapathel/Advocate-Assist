@@ -4,6 +4,7 @@ from . import views
 from django.contrib.auth import views as auth_views
 
 
+
 urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
@@ -36,7 +37,8 @@ urlpatterns = [
     path('approve-student/<int:student_id>/', views.approve_student, name='approve_student'),
     path('reject-student/<int:student_id>/', views.reject_student, name='reject_student'),
     path('set_password/<str:uidb64>/<str:token>/', views.password_reset_confirm_student, name='password_reset_confirm_student'),
-    
+    path('otp-verification/', views.otp_verification, name='otp_verification'),
+    path('login-via-otp/', views.login_otp, name='login_via_otp'),
 ]
 
 

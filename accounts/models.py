@@ -66,9 +66,7 @@ class CustomUser(AbstractUser):
     state = models.CharField(max_length=50, choices=STATES, blank=True, null=False)
     # state = models.CharField(max_length=10, choices=STATES, default='kerala')  # Added: State field
     phone = models.CharField(max_length=15,blank=True)  # Added: Phone number field
-    
-from django.db import models
-from django.contrib.auth import get_user_model
+
 
 class TimeSlot(models.Model):
     DAY_CHOICES = (

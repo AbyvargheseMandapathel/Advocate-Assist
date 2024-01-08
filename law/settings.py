@@ -146,6 +146,7 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 AUTHENTICATION_BACKENDS = [
     'accounts.auth_backends.EmailBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
+    'accounts.auth_backends.PhoneBackend',
 ]
 
 # law/settings.py
@@ -199,5 +200,10 @@ SESSION_SAVE_EVERY_REQUEST = True
 RAZORPAY_KEY_ID = "rzp_test_cvGs8NAQTlqQrP"
 RAZORPAY_KEY_SECRET = "hNPvcoyR5F1mKYlgG60C2GW6"
 
+TWILIO_PHONE_NUMBER = '+447360273978'
+
+TWILIO_AUTH_TOKEN = 'b782d60ab56a26979f27a1bb6219e40c'
+
+TWILIO_ACCOUNT_SID = 'AC1a93b168e58f46323a25cdbd950ba26f'
 
 
